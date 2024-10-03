@@ -1,0 +1,65 @@
+
+.note {
+  --padding: 0.5rem;
+  position: absolute;
+  left: calc(var(--shift-x) + var(--x));
+  top: calc(var(--shift-y) + var(--y));
+  background-color: white;
+  padding: var(--padding);
+  border: 1px solid grey;
+  border-radius: 0.25rem;
+  width: 16rem;
+  user-select: none;
+
+  &.highlight {
+    border-color: red;
+  }
+
+  > .container {
+    position: relative;
+
+    >img {
+      width: 100%;
+      pointer-events: none;
+      display: block;
+      margin-bottom: 0.75rem;
+    }
+
+    >img:not([src]) {
+      display: none;
+    }
+
+    > .dot {
+      --size: 0.5rem;
+      --delta1: calc((var(--padding) + var(--size)) * -0.5);
+      --delta2: calc(50% - var(--size) * 0.5);
+      position: absolute;
+      width: var(--size);
+      height: var(--size);
+      border-radius: 50%;
+      background-color: #00000010;
+      z-index: 1;
+
+      &:hover {
+        background-color: red;
+      }
+
+      &[data-pos="0"] {
+        left: var(--delta1);
+        top: var(--delta2);
+      }
+      &[data-pos="1"] {
+        top: var(--delta1);
+        left: var(--delta2);
+      }
+      &[data-pos="2"] {
+        right: var(--delta1);
+        top: var(--delta2);
+      }
+      &[data-pos="3"] {
+        bottom: var(--delta1);
+        left: var(--delta2);
+      }
+    }
+  }
+}

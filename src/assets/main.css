@@ -1,0 +1,40 @@
+@import './note.css';
+
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities; */
+
+* {
+  box-sizing: border-box;
+  /* outline: 1px solid red; */
+}
+
+:root, body, #app {
+  min-height: 100vh;
+  height: 100%;
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 0px;
+  padding: 0px;
+}
+
+line {
+  stroke-linecap: round;
+  pointer-events: initial;
+
+  &:hover {
+    filter: invert(1);
+  }
+
+  &.highlight {
+    stroke-dasharray: 10 5;
+  }
+}
+
+.row {
+  margin-top: 0.5rem;
+}
+
+a {
+  color: #60a5fa;
+  text-decoration: underline;
+}
