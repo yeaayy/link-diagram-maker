@@ -48,7 +48,9 @@ export class NoteView {
       )
     );
 
-    // this.viewImage.onload
+    this.viewImage.onload = () => {
+      this.updatePosition();
+    }
 
     this.pointerHandler = new PointerHandler({
       onmove: this.onPointerMove,
@@ -70,16 +72,17 @@ export class NoteView {
     this.text = _text;
     this.img = _img;
     this.viewRoot.dataset['id'] = id.toString();
-    this.updatePosition();
 
     board.snapshot.push(new SACreateNote(this));
   }
 
   public attach(dst: HTMLElement) {
     dst.appendChild(this.viewRoot);
-    this.pointerHandler.attach(this.viewRoot, dst);
-    for (let i = 0; i < 4; i++) {
-      this.dotPointerHandlers[i].attach(this.dots[i], dst);
+    if (this.board.editable) {
+      this.pointerHandler.attach(this.viewRoot, dst);
+      for (let i = 0; i < 4; i++) {
+        this.dotPointerHandlers[i].attach(this.dots[i], dst);
+      }
     }
   }
 
@@ -87,9 +90,11 @@ export class NoteView {
     if (!this.isAttached()) return;
     this.beforeDetached.emit(this);
     this.viewRoot.parentElement!.removeChild(this.viewRoot);
-    this.pointerHandler.detach();
-    for (const dotPointerHandler of this.dotPointerHandlers) {
-      dotPointerHandler.detach();
+    if (this.board.editable) {
+      this.pointerHandler.detach();
+      for (const dotPointerHandler of this.dotPointerHandlers) {
+        dotPointerHandler.detach();
+      }
     }
   }
 
@@ -134,8 +139,8 @@ export class NoteView {
       this.viewImage.src = img.fullPath;
     } else {
       this.viewImage.removeAttribute('src')
+      this.updatePosition();
     }
-    this.updatePosition();
 
     if (this.isAttached())
       this.board.snapshot.push(new SAEditNote(this, ['img']));

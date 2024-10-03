@@ -7,7 +7,7 @@ $data = validate_request([
 ]);
 
 $db = use_db();
-$s = $db->prepare('SELECT id, name FROM `boards` AS b WHERE b.uid = :uid');
+$s = $db->prepare('SELECT id, owner, name FROM `boards` AS b WHERE b.uid = :uid');
 $s->execute([
   'uid' => hex2bin($data['id']),
 ]);
@@ -22,9 +22,10 @@ if (empty($row)) {
 }
 
 $name = $row['name'];
+$board_owner = $row['owner'];
 $board_id = $row['id'];
 
-$s = $db->prepare('SELECT n.id, n.x, n.y, n.text, n.image_id, i.path, i.name FROM `notes` AS n LEFT JOIN `images` AS i ON n.image_id = i.id WHERE n.board_id = :board_id');
+$s = $db->prepare('SELECT n.note_id, n.x, n.y, n.text, n.image_id, i.path, i.name FROM `notes` AS n LEFT JOIN `images` AS i ON n.image_id = i.id WHERE n.board_id = :board_id');
 $s->execute([
   'board_id' => $board_id,
 ]);
@@ -36,12 +37,10 @@ while ($row = $s->fetch()) {
       'id' => $row['image_id'],
       'path' => $row['path'],
       'name' => $row['name'],
-      // 'width' => $row['width'],
-      // 'height' => $row['height'],
     ];
   }
   array_push($notes, [
-    'id' => $row['id'],
+    'id' => $row['note_id'],
     'x' => $row['x'],
     'y' => $row['y'],
     'text' => $row['text'],
@@ -49,7 +48,7 @@ while ($row = $s->fetch()) {
   ]);
 }
 
-$s = $db->prepare('SELECT id, note_1, note_2, pos_1, pos_2, color FROM `connections` WHERE board_id = :board_id');
+$s = $db->prepare('SELECT id, note_1, note_2, pos_1, pos_2, color, size FROM `connections` WHERE board_id = :board_id');
 $s->execute([
   'board_id' => $board_id,
 ]);
@@ -62,11 +61,18 @@ while ($row = $s->fetch()) {
     'pos_1' => $row['pos_1'],
     'pos_2' => $row['pos_2'],
     'color' => bin2hex($row['color']),
+    'size' => $row['size'],
   ]);
+}
+
+$editable = false;
+if (key_exists('user_id', $_SESSION)) {
+  $editable = $board_owner == $_SESSION['user_id'];
 }
 
 echo json_encode([
   'name' => $name,
+  'editable' => $editable,
   'notes' => $notes,
   'conns' => $conns,
 ]);

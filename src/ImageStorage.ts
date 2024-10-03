@@ -6,6 +6,7 @@ import type { Router } from "vue-router";
 
 export class ImageStorage {
   private images = shallowRef([] as StoredImage[]);
+  private map = new Map<any, StoredImage>();
   private fetched = false;
 
   constructor(
@@ -15,10 +16,17 @@ export class ImageStorage {
   public add(id: any, path: string, name: string, trigger = true) {
     const result = new StoredImage(id, path, name);
     this.images.value.push(result);
+    this.map.set(id, result);
     if (trigger) {
       triggerRef(this.images);
     }
     return result;
+  }
+
+  public getOrAdd(id: any, path: string, name: string, trigger = true) {
+    const result = this.map.get(id);
+    if (result) return result;
+    return this.add(id, path, name, trigger);
   }
 
   public getAllRef() {
@@ -34,7 +42,7 @@ export class ImageStorage {
       try {
         const { data } = await http.get('img/get.php');
         for (const item of data) {
-          this.add(item.id, item.path, item.name);
+          this.getOrAdd(item.id, item.path, item.name, false);
         }
         triggerRef(this.images);
         break

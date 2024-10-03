@@ -2,17 +2,19 @@
 import { imageStorageKey } from '@/ImageStorage';
 import ConnectionEditor from '@/components/ConnectionEditor.vue';
 import NoteEditor from '@/components/NoteEditor.vue';
+import Toolbar from '@/components/Toolbar.vue';
 import http from '@/http';
 import { BoardView } from '@/model/BoardView';
-import { ConnPosition, ConnectionView } from '@/model/ConnectionView';
+import { ConnectionView } from '@/model/ConnectionView';
 import { NoteView } from '@/model/NoteView';
 import { DropArea } from '@/utils/DropArea';
 import PointerHandler, { type GenericPointerEvent, type PointerMoveEvent } from '@/utils/PointerHandler';
 import keyboard, { getModifier } from '@/utils/keyboard';
-import { inject, onBeforeUnmount, onMounted, shallowRef, triggerRef, type ComponentInstance, type ShallowRef, watch } from 'vue';
+import { faUpload } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { inject, onBeforeUnmount, onMounted, shallowRef, triggerRef, type ComponentInstance, type ShallowRef } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-let initialized = false;
 let px = 0, py = 0;
 const router = useRouter();
 const boardId = useRoute().params.id;
@@ -21,7 +23,6 @@ const svg = shallowRef(null! as SVGElement);
 const selectedConnection: ShallowRef<null | ConnectionView> = shallowRef(null);
 const selectedNote: ShallowRef<null | NoteView> = shallowRef(null);
 const noteEditor = shallowRef(null! as ComponentInstance<typeof NoteEditor>);
-const board = shallowRef(new BoardView());
 const imageStorage = inject(imageStorageKey)!;
 const dropArea = new DropArea('image/');
 const poinerHandler = new PointerHandler({
@@ -31,17 +32,19 @@ const poinerHandler = new PointerHandler({
   stopPropagation: true,
 });
 
-// @ts-ignore
-window.board = board.value;
-
+if (typeof boardId !== 'string') {
+  router.push({ name: 'my-boards' });
+}
+const board = shallowRef(new BoardView(boardId as string));
 board.value.noteCreated.listen(onNoteCreated);
 board.value.connectionCreated.listen(onConnectionCreated);
-dropArea.dropped.listen((file: File, e: DragEvent) => {
-  imageStorage.upload(file).then((img => {
-    const b = board.value;
-    b.createNote(e.clientX - b.dx, e.clientY - b.dy, '', img)
-  }))
-})
+
+dropArea.dropped.listen(onFileDropped);
+
+if (import.meta.env.DEV) {
+  // @ts-ignore
+  window.board = board.value;
+}
 
 http.get('board/get.php', {
   params: {
@@ -52,9 +55,36 @@ http.get('board/get.php', {
     router.push({ name: 'my-boards' });
     return
   }
-  // board.value = data;
-  console.log(data)
+  try {
+    board.value.name = data.name;
+    board.value.editable = data.editable;
+    for (const note of data.notes) {
+      const i = note.img
+      board.value.newNote(parseInt(note.id), parseFloat(note.x), parseFloat(note.y), note.text, i ? imageStorage.getOrAdd(i.id, i.path, i.name) : null);
+    }
+    for (const conn of data.conns) {
+      board.value.newConnection(parseInt(conn.note_1), parseInt(conn.pos_1), parseInt(conn.note_2), parseInt(conn.pos_2), conn.color, parseInt(conn.size));
+    }
+    if (!data.editable) {
+      disableEditing();
+    }
+    triggerRef(board);
+  } catch (e) {
+    console.error('Error reading data from  the server', e)
+  }
+  board.value.snapshot.reset();
 });
+
+function isEditable() {
+  return board.value.editable;
+}
+
+function onFileDropped(file: File, e: DragEvent)  {
+  imageStorage.upload(file).then((img => {
+    const b = board.value;
+    b.createNote(e.clientX - b.dx, e.clientY - b.dy, '', img)
+  }));
+}
 
 function onPointerIdle(ev: GenericPointerEvent, x: number, y: number) {
   px = x;
@@ -117,11 +147,14 @@ function createNewImageNote() {
 
 function onNoteCreated(note: NoteView) {
   note.attach(root.value);
-  note.clicked.listen(onNoteClicked);
-  note.beforeDetached.listen(onBeforeNoteDetached);
+  if (isEditable()) {
+    note.clicked.listen(onNoteClicked);
+    note.beforeDetached.listen(onBeforeNoteDetached);
+  }
 }
 
 function onBeforeNoteDetached(note: NoteView) {
+  if (!isEditable()) return;
   note.clicked.remove(onNoteClicked);
   note.beforeDetached.remove(onBeforeNoteDetached);
   if (note === selectedNote.value) {
@@ -139,11 +172,14 @@ function onNoteClicked(note: NoteView) {
 function onConnectionCreated(conn: ConnectionView) {
   conn.attach(svg.value);
   conn.updateView();
-  conn.clicked.listen(onConnectionClicked);
-  conn.beforeDetached.listen(onBeforeConnectionDetached)
+  if (isEditable()) {
+    conn.clicked.listen(onConnectionClicked);
+    conn.beforeDetached.listen(onBeforeConnectionDetached)
+  }
 }
 
 function onBeforeConnectionDetached(conn: ConnectionView) {
+  if (!isEditable()) return;
   conn.clicked.remove(onConnectionClicked);
   conn.beforeDetached.remove(onBeforeConnectionDetached);
   if (conn === selectedConnection.value) {
@@ -157,19 +193,16 @@ function onConnectionClicked(conn: ConnectionView) {
   selectedConnection.value = conn;
 }
 
-async function init() {
-  const img = await imageStorage.getAll();
-
-  board.value.newNote(1, 100, 50, 'Lorem ipsum dolor sit, amet consectetur adsomeipisicing elit. Excepturi, qui repellat! Culpa soluta repudiandae labore id adipisci in, earum corrupti.some', img[0]);
-  board.value.newNote(2, 100, 250, 'Something', img[1]);
-  board.value.newConnection(1, ConnPosition.bottom, 2, ConnPosition.top, 'ff0000', 5);
+function disableEditing() {
+  dropArea.dropped.remove(onFileDropped);
+  dropArea.detach();
+  keyboard.removeShortcut('delete', onPressDelete);
+  keyboard.removeShortcut('alt+n', createNewNote);
+  keyboard.removeShortcut('ctrl+shift+n', createNewNote);
+  keyboard.removeShortcut('alt+i', createNewImageNote);
 }
 
 onMounted(async() => {
-  if (!initialized) {
-    initialized = true;
-    await init();
-  }
   dropArea.attach(root.value);
   poinerHandler.attach(root.value, root.value.parentElement!);
   root.value.addEventListener('wheel', onWheel);
@@ -182,48 +215,81 @@ onMounted(async() => {
 });
 
 onBeforeUnmount(() => {
-  dropArea.detach();
   poinerHandler.detach();
   root.value.removeEventListener('wheel', onWheel);
   window.removeEventListener('resize', onWindowResize);
-  keyboard.removeShortcut('delete', onPressDelete);
-  keyboard.removeShortcut('alt+n', createNewNote);
-  keyboard.removeShortcut('ctrl+shift+n', createNewNote);
-  keyboard.removeShortcut('alt+i', createNewImageNote);
+  disableEditing();
 });
 </script>
 
 <template>
-  <div ref="root" class="board" :style="{
-    '--shift-x': board.dx + 'px',
-    '--shift-y': board.dy + 'px',
-  }">
+  <Toolbar :board="board" :editable="board.editable" :board-name="board.name" />
+
+  <div class="content">
+    <div ref="root" class="board" :style="{
+      '--shift-x': board.dx + 'px',
+      '--shift-y': board.dy + 'px',
+    }">
+    </div>
+    <svg id="board-svg" ref="svg" :width="board.width" :height="board.height"
+      :viewBox="[-board.dx, -board.dy, board.width, board.height].join(' ')">
+    </svg>
   </div>
-  <svg ref="svg" :width="board.width" :height="board.height"
-    :viewBox="[-board.dx, -board.dy, board.width, board.height].join(' ')">
-  </svg>
 
   <ConnectionEditor :connection="selectedConnection"></ConnectionEditor>
   <NoteEditor ref="noteEditor" :note="selectedNote"></NoteEditor>
+
+  <div class="overlay">
+    <div>
+      <FontAwesomeIcon :icon="faUpload" />
+      Upload Image
+    </div>
+  </div>
 </template>
 
 <style scoped>
+.content {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
 .board {
   width: 100%;
   height: 100%;
   position: relative;
-  overflow: hidden;
 }
 
-.dropping {
-  filter: invert(1);
-}
-
-svg {
+#board-svg {
   position: absolute;
   top: 0;
   left: 0;
   pointer-events: none;
+}
 
+.overlay {
+  display: none;
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  right: 0px;
+  bottom: 0px;
+  background-color: #00000088;
+  color: white;
+  font-size: 3rem;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+
+.dropping ~ .overlay {
+  display: flex;
+}
+</style>
+
+<style>
+#app {
+  display: flex;
+  flex-direction: column;
 }
 </style>

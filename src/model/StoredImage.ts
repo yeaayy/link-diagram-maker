@@ -7,6 +7,6 @@ export class StoredImage{
   ) {}
 
   get fullPath() {
-    return '../img/' + this.path;
+    return './img/' + this.path;
   }
 }

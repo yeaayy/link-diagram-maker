@@ -12,6 +12,8 @@ export class BoardView {
 
   public defaultColor = 'ff0000';
   public defaultSize = 5;
+  public editable = false;
+  public name = 'Untitled';
 
   public readonly notes: NoteView[] = []
   public readonly connections: ConnectionView[] = [];
@@ -23,7 +25,7 @@ export class BoardView {
   public readonly snapshot;
 
   constructor(
-    private id: string
+    public readonly id: string
   ) {
     this.snapshot = new Snapshot(id);
   }

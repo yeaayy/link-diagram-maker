@@ -21,5 +21,6 @@ export default ({ mode }: {mode: string}) => {
       },
     },
     publicDir: './public',
+    base: './',
   });
 }

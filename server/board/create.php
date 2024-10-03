@@ -4,7 +4,7 @@ require_method_post();
 require_user();
 
 $db = use_db();
-$s = $db->prepare('INSERT INTO `boards`(`owner`, `uid`, `name`) VALUES(:user_id, UUID_TO_BIN(UUID()), \'Untitled board\')');
+$s = $db->prepare('INSERT INTO `boards`(`owner`, `uid`, `name`) VALUES(:user_id, UNHEX(REPLACE(UUID(),"-","")), \'Untitled board\')');
 $s->execute([
   'user_id' => $user_id,
 ]);

@@ -31,6 +31,7 @@ function open() {
 
   &:hover {
     background-color: #93c5fd;
+    cursor: pointer;
   }
 }
 </style>

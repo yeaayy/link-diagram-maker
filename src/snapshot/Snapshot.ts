@@ -1,3 +1,4 @@
+import TypedEventListener from "@/utils/TypedEventListener";
 import type { ConnPosition, ConnectionView } from "../model/ConnectionView";
 import type { NoteView } from "../model/NoteView";
 
@@ -16,6 +17,7 @@ export type ConnectionSnapshot = {
   color?: string;
   size?: number;
 }
+
 export type NoteSnapshot = {
   type: SnapshotType,
   id: number;
@@ -33,16 +35,28 @@ export class Snapshot {
   public notes = new Map<string, NoteSnapshot>();
   public connections = new Map<string, ConnectionSnapshot>();
 
+  public readonly state = new TypedEventListener<[dirty: boolean]>();
+  private _isDirty = false;
+
   constructor(
     private boardId: string,
   ) {}
 
   public push(action: SnapshotAction) {
     action.apply(this);
-    console.log(this.toRaw())
+    if (!this._isDirty) {
+      this.state.emit(true);
+    }
+    this._isDirty = true;
+  }
+
+  public get isDirty() {
+    return this._isDirty;
   }
 
   public reset() {
+    this._isDirty = false;
+    this.state.emit(false);
     this.notes.clear();
     this.connections.clear();
   }

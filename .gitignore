@@ -29,4 +29,5 @@ coverage
 
 *.tsbuildinfo
 .note
-.env
+.env*
+server/common/config.php

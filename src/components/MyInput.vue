@@ -33,7 +33,7 @@ function oninput(e: Event) {
     :required="required"
   />
   <br>
-  <span class="text-sm text-red-600">{{ validate ? validate.$errors[0]?.$message : '' }}</span>
+  <span class="feedback">{{ validate ? validate.$errors[0]?.$message : '' }}</span>
 </template>
 
 <style scoped>
@@ -45,5 +45,11 @@ input {
   &:focus {
     border-color: #3b82f6;
   }
+}
+
+.feedback {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #dc2626;
 }
 </style>

@@ -7,6 +7,7 @@ if (!has_file('image')) {
   echo json_encode([
     'error' => 'No image provided',
   ]);
+  http_response_code(400);
   exit;
 }
 

@@ -35,7 +35,7 @@ function get_request()
     $result[$k] = $v;
   }
   if (key_exists('CONTENT_TYPE', $_SERVER) && $_SERVER['CONTENT_TYPE'] === 'application/json') {
-    $json = json_decode(file_get_contents('php://input'));
+    $json = json_decode(file_get_contents('php://input'), true);
     if (json_last_error() !== JSON_ERROR_NONE) {
       http_response_code(400);
       echo json_encode([
@@ -182,7 +182,7 @@ function require_user()
 
 function upload_file($name)
 {
-  $target_dir = __DIR__ . '/../../public/img/';
+  $target_dir = __DIR__ . '/../../img/';
   $basename = basename($_FILES[$name]["name"]);
   $ext = strtolower(pathinfo($basename, PATHINFO_EXTENSION));
   $filename = pathinfo($basename, PATHINFO_FILENAME);

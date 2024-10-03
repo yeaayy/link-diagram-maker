@@ -67,7 +67,7 @@ async function register(e: Event) {
         Don't have account? <RouterLink :to="{ name: 'register' }" class="text-blue-400 underline">Register</RouterLink>
       </div>
 
-      <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold p-2 w-full">Login</button>
+      <button type="submit" class="row bg-emerald-600 hover:bg-emerald-500 text-white font-bold p-2 w-full">Login</button>
     </form>
   </div>
 </template>

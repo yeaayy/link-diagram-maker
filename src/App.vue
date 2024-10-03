@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { loadingKey } from '@/loading';
 import { provide, ref } from 'vue';
-import { RouterView, useRouter } from 'vue-router';
+import { RouterView, useRoute, useRouter } from 'vue-router';
 import { ImageStorage, imageStorageKey } from './ImageStorage';
 
 const router = useRouter();
