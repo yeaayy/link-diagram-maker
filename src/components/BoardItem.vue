@@ -19,7 +19,7 @@ function open() {
 </script>
 
 <template>
-  <div class="item border-t border-black p-1 hover:bg-blue-300" @click="open">
+  <div class="item" @click="open">
     {{ name }}
   </div>
 </template>

@@ -52,8 +52,8 @@ async function register(e: Event) {
 </script>
 
 <template>
-  <div class="login m-auto">
-    <h3 class="text-xl font-bold mb-4 w-full text-center">LOGIN</h3>
+  <div class="login">
+    <h3>LOGIN</h3>
     <form @submit="register">
       <div class="row">
         <MyInput type="text" name="username" label="Username" :validate="v.username" v-model="data.username" @input="clear" required/>
@@ -67,7 +67,7 @@ async function register(e: Event) {
         Don't have account? <RouterLink :to="{ name: 'register' }" class="text-blue-400 underline">Register</RouterLink>
       </div>
 
-      <button type="submit" class="row bg-emerald-600 hover:bg-emerald-500 text-white font-bold p-2 w-full">Login</button>
+      <button type="submit" class="row">Login</button>
     </form>
   </div>
 </template>

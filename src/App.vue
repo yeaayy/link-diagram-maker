@@ -18,8 +18,8 @@ provide(imageStorageKey, new ImageStorage(router));
 <template>
   <RouterView />
 
-  <div v-if="isLoading" class="container absolute left-0 top-0 right-0 bottom-0 bg-black bg-opacity-70 flex">
-    <div class="spin m-auto animate-spin w-9 h-9 border-4 border-gray-400 border-t-white rounded-full"></div>
+  <div v-if="isLoading" class="container">
+    <div class="spin"></div>
   </div>
 </template>
 

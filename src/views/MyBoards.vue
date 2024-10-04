@@ -42,9 +42,9 @@ function createNewBoard() {
 </script>
 
 <template>
-  <div id="my-board" class="lg:px-48 md:px-24 sm:px-8 px-4 py-3 flex-1">
-    <h3 class="text-2xl font-bold">MY BOARDS</h3>
-    <button @click="createNewBoard" class="px-4 py-1 border border-blue-300 hover:bg-blue-200 rounded-full">
+  <div id="my-board">
+    <h3>MY BOARDS</h3>
+    <button @click="createNewBoard">
       <FontAwesomeIcon :icon="faPlus" />
       Create
     </button>

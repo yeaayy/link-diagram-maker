@@ -53,7 +53,7 @@ async function register(e: Event) {
 
 <template>
   <div class="register m-auto">
-    <h3 class="text-xl font-bold mb-4 w-full text-center">REGISTER</h3>
+    <h3>REGISTER</h3>
     <form @submit="register">
       <div class="row">
         <MyInput type="text" name="username" label="Username" :validate="v.username" v-model="data.username" required/>
@@ -68,10 +68,10 @@ async function register(e: Event) {
       </div>
 
       <div class="row">
-        Already have account? <RouterLink :to="{ name: 'login' }" class="text-blue-400 underline">login</RouterLink>
+        Already have account? <RouterLink :to="{ name: 'login' }">login</RouterLink>
       </div>
 
-      <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold p-2 w-full">Register</button>
+      <button type="submit">Register</button>
     </form>
   </div>
 </template>
