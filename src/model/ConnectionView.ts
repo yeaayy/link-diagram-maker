@@ -30,8 +30,8 @@ export class ConnectionView {
     size: number,
   ) {
     this.view = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    a.conn.push(this)
-    b.conn.push(this);
+    a.conn.set(b.id, this);
+    b.conn.set(a.id, this);
     this.color = color;
     this.size = size;
     this.view.addEventListener('click', this);
@@ -55,10 +55,12 @@ export class ConnectionView {
 
   public destroy() {
     this.board.snapshot.push(new SADeleteConnection(this));
-    let i = this.a.conn.indexOf(this);
-    this.a.conn.splice(i, 1);
-    i = this.b.conn.indexOf(this);
-    this.b.conn.splice(i, 1);
+    const index = this.board.connections.indexOf(this);
+    if (index !== -1) {
+      this.board.connections.splice(index, 1);
+    }
+    this.a.conn.delete(this.b.id);
+    this.b.conn.delete(this.a.id);
     this.detach();
   }
 

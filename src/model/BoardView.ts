@@ -57,6 +57,14 @@ export class BoardView {
       if (!noteB) throw new Error(`Note with id '${b}' not found`);
       b = noteB;
     }
+
+    if (a.id > b.id) {
+      [b, pb, a, pa] = [a, pa, b, pb];
+    }
+    if (this.isConnected(a, b)) {
+      throw new Error(`Note ${a.id} and ${b.id} already connected`)
+    }
+
     if (color === undefined) {
       color = this.defaultColor;
     }
@@ -68,5 +76,18 @@ export class BoardView {
     this.connections.push(result);
     this.connectionCreated.emit(result);
     return result;
+  }
+
+  public isConnected(a: number | NoteView, b: number | NoteView) {
+    if (typeof a === 'number') {
+      const noteA = this.noteMap.get(a);
+      if (!noteA) throw new Error(`Note with id '${a}' not found`);
+      a = noteA;
+    }
+    if (typeof b !== 'number') {
+      b = b.id;
+    }
+
+    return a.conn.has(b);
   }
 }

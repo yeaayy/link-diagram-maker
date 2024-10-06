@@ -66,7 +66,7 @@ export class Snapshot {
   }
 
   public getConnectionKey(conn: ConnectionView): string {
-    return `${conn.a},${conn.pa}>${conn.b},${conn.pb}`;
+    return `${conn.a.id},${conn.pa}>${conn.b.id},${conn.pb}`;
   }
 
   public toRaw(): Object {

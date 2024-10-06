@@ -26,7 +26,7 @@ export class NoteView {
   public readonly beforeDetached = new TypedEventListener<NoteView>();
   public readonly clicked = new TypedEventListener<NoteView>();
   public readonly dots: HTMLElement[] = [];
-  public readonly conn: ConnectionView[] = [];
+  public readonly conn = new Map<number, ConnectionView>;
 
   constructor(
     private board: BoardView,
@@ -104,7 +104,7 @@ export class NoteView {
 
   public destroy() {
     this.board.snapshot.push(new SADeleteNote(this));
-    for (const conn of this.conn) {
+    for (const conn of this.conn.values()) {
       conn.destroy();
     }
     const i = this.board.notes.indexOf(this);
@@ -182,6 +182,9 @@ export class NoteView {
     if (this.id === dragToId) {
       return
     }
+    if (this.board.isConnected(this, dragToId)) {
+      return;
+    }
     this.board.newConnection(this, parseInt(this.dragFrom), dragToId, parseInt(dragToPos));
   }
 
@@ -193,7 +196,7 @@ export class NoteView {
   private updatePosition() {
     this.viewRoot.style.setProperty('--x', this._x + 'px');
     this.viewRoot.style.setProperty('--y', this._y + 'px');
-    for (const c of this.conn) {
+    for (const c of this.conn.values()) {
       c.updateView();
     }
   }

@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { fileURLToPath, URL } from 'node:url';
 
 import vue from '@vitejs/plugin-vue';
@@ -22,5 +23,8 @@ export default ({ mode }: {mode: string}) => {
     },
     publicDir: './public',
     base: './',
+    test: {
+      environment: 'happy-dom',
+    },
   });
 }
