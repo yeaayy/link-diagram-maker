@@ -20,6 +20,7 @@ const router = useRouter();
 const boardId = useRoute().params.id;
 const root = shallowRef(null! as HTMLDivElement);
 const svg = shallowRef(null! as SVGElement);
+const previewConnection = document.createElementNS('http://www.w3.org/2000/svg', 'line');
 const selectedConnection: ShallowRef<null | ConnectionView> = shallowRef(null);
 const selectedNote: ShallowRef<null | NoteView> = shallowRef(null);
 const noteEditor = shallowRef(null! as ComponentInstance<typeof NoteEditor>);
@@ -38,6 +39,7 @@ if (typeof boardId !== 'string') {
 const board = shallowRef(new BoardView(boardId as string));
 board.value.noteCreated.listen(onNoteCreated);
 board.value.connectionCreated.listen(onConnectionCreated);
+board.value.previewConnection.listen(onPreviewConnection);
 
 dropArea.dropped.listen(onFileDropped);
 
@@ -133,6 +135,16 @@ function unselect() {
   }
 }
 
+function onPreviewConnection(from: HTMLElement, toX: number, toY: number) {
+  const start = from.getBoundingClientRect();
+  previewConnection.setAttribute('stroke', '#' + board.value.defaultColor);
+  previewConnection.setAttribute('stroke-width', board.value.defaultSize.toString());
+  previewConnection.x1.baseVal.value = start.x + start.width / 2 - board.value.dx;
+  previewConnection.y1.baseVal.value = start.y + start.height / 2 - board.value.dy;
+  previewConnection.x2.baseVal.value = toX - board.value.dx;
+  previewConnection.y2.baseVal.value = toY - board.value.dy;
+}
+
 function createNewNote() {
   unselect();
   const b = board.value
@@ -212,6 +224,9 @@ onMounted(async() => {
   keyboard.addShortcut('alt+n', createNewNote);
   keyboard.addShortcut('ctrl+shift+n', createNewNote);
   keyboard.addShortcut('alt+i', createNewImageNote);
+
+  svg.value.appendChild(previewConnection);
+  previewConnection.classList.add('preview-connection');
 });
 
 onBeforeUnmount(() => {
@@ -219,6 +234,7 @@ onBeforeUnmount(() => {
   root.value.removeEventListener('wheel', onWheel);
   window.removeEventListener('resize', onWindowResize);
   disableEditing();
+  svg.value.removeChild(previewConnection);
 });
 </script>
 

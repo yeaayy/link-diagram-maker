@@ -21,7 +21,8 @@ export class NoteView {
   private pointerHandler;
   private dotPointerHandlers: PointerHandler[];
 
-  private dragFrom = null! as string;
+  private dragFrom = null! as number;
+  private drawPreview: null | SVGLineElement = null;
 
   public readonly beforeDetached = new TypedEventListener<NoteView>();
   public readonly clicked = new TypedEventListener<NoteView>();
@@ -63,6 +64,7 @@ export class NoteView {
     for (let i = 0; i < 4; i++) {
       this.dotPointerHandlers.push(new PointerHandler({
         onstart: this.onStartDragDot,
+        onmove: this.onDraggingDot,
         onend: this.onEndDragDot,
         stopPropagation: true,
         instance: this,
@@ -169,10 +171,16 @@ export class NoteView {
 
   private onStartDragDot(e: GenericPointerEvent, px: number, py: number) {
     const target = e.target as HTMLElement;
-    this.dragFrom = target.dataset['pos']!;
+    this.dragFrom = parseInt(target.dataset['pos']!);
+    document.body.classList.add('dragging-dot');
+  }
+
+  private onDraggingDot(ev: GenericPointerEvent, e: PointerMoveEvent) {
+    this.board.previewConnection.emit(this.dots[this.dragFrom], e.px, e.py);
   }
   
   private onEndDragDot(e: GenericPointerEvent, px: number, py: number) {
+    document.body.classList.remove('dragging-dot');
     const target = e.target as HTMLElement;
     if (!target.classList.contains('dot')) {
       return;
@@ -185,7 +193,7 @@ export class NoteView {
     if (this.board.isConnected(this, dragToId)) {
       return;
     }
-    this.board.newConnection(this, parseInt(this.dragFrom), dragToId, parseInt(dragToPos));
+    this.board.newConnection(this, this.dragFrom, dragToId, parseInt(dragToPos));
   }
 
   public onPointerClick(e: GenericPointerEvent) {

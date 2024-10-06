@@ -30,7 +30,7 @@
     }
 
     > .dot {
-      --size: 0.5rem;
+      --size: 1rem;
       --delta1: calc((var(--padding) + var(--size)) * -0.5);
       --delta2: calc(50% - var(--size) * 0.5);
       position: absolute;
@@ -62,4 +62,20 @@
       }
     }
   }
+}
+
+.dragging-dot .note .dot {
+  background-color: #ff9d9d;
+}
+
+.preview-connection {
+  display: none;
+
+  &:hover {
+    filter: none;
+  }
+}
+
+.dragging-dot .preview-connection {
+  display: block;
 }

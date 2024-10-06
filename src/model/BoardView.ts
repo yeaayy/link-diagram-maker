@@ -20,6 +20,7 @@ export class BoardView {
 
   public readonly noteCreated = new TypedEventListener<NoteView>();
   public readonly connectionCreated = new TypedEventListener<ConnectionView>();
+  public readonly previewConnection = new TypedEventListener<[from: HTMLElement, toX: number, toY: number]>();
 
   public readonly noteMap = new Map<number, NoteView>();
   public readonly snapshot;
