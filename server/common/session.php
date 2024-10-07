@@ -5,6 +5,8 @@ ini_set("error_log", __DIR__ . "/error.log");
 
 session_start();
 
+$upload_dir = __DIR__ . '/../../img/';
+
 require_once __DIR__ . '/config.php';
 
 function use_db(): \PDO
@@ -182,13 +184,13 @@ function require_user()
 
 function upload_file($name)
 {
-  $target_dir = __DIR__ . '/../../img/';
+  global $upload_dir;
   $basename = basename($_FILES[$name]["name"]);
   $ext = strtolower(pathinfo($basename, PATHINFO_EXTENSION));
   $filename = pathinfo($basename, PATHINFO_FILENAME);
   do {
     $target_name = bin2hex(random_bytes(16)) . '.' . $ext;
-    $target_path = $target_dir . $target_name;
+    $target_path = $upload_dir . $target_name;
   } while(file_exists($target_path));
 
   move_uploaded_file($_FILES[$name]["tmp_name"], $target_path);
@@ -196,6 +198,12 @@ function upload_file($name)
     'path' => $target_name,
     'name' => $filename,
   ];
+}
+
+function delete_file($path)
+{
+  global $upload_dir;
+  unlink($upload_dir . $path);
 }
 
 function has_file($name)

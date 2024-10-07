@@ -1,8 +1,8 @@
 import { AxiosError } from "axios";
-import http from "./http";
-import { StoredImage } from "./model/StoredImage";
 import { shallowRef, triggerRef, type InjectionKey } from "vue";
 import type { Router } from "vue-router";
+import http from "./http";
+import { StoredImage } from "./model/StoredImage";
 
 export class ImageStorage {
   private images = shallowRef([] as StoredImage[]);
@@ -68,6 +68,19 @@ export class ImageStorage {
       },
     });
     return this.add(data.id, data.path, data.name);
+  }
+
+  public async delete(img: StoredImage): Promise<boolean> {
+    const { data } = await http.post('img/delete.php', {
+      img: img.id,
+    });
+    if (!data.error) {
+      this.map.delete(img.id);
+      const index = this.images.value.findIndex(i => i.id == img.id);
+      this.images.value.splice(index, 1);
+      triggerRef(this.images);
+    }
+    return data.error === false;
   }
 }
 

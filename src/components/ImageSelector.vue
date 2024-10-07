@@ -2,9 +2,11 @@
 import { imageStorageKey } from '@/ImageStorage';
 import type { StoredImage } from '@/model/StoredImage';
 import keyboard from '@/utils/keyboard';
-import { faCross, faPencil, faX } from '@fortawesome/free-solid-svg-icons';
+import { faPencil, faTrash, faX } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { computed, inject, onBeforeMount, onMounted, shallowRef, type ShallowRef } from 'vue';
+import Dropdown from './Dropdown.vue';
+import DropdownItem from './DropdownItem.vue';
 
 const prop = withDefaults(defineProps<{
   img?: StoredImage | null;
@@ -32,6 +34,10 @@ function onSelecting() {
 
 function cancelSelecting() {
   selecting.value = false;
+}
+
+function deleteImage(img: StoredImage) {
+  imageStorage.delete(img);
 }
 
 onMounted(() => {
@@ -81,6 +87,12 @@ defineExpose({
         </div>
         <div v-for="img of list" class="item" @click="onItemClick(img)">
           <img :src="img.fullPath">
+          <Dropdown class="menu">
+            <DropdownItem @click="deleteImage(img)" class="dropdown-item delete">
+              <FontAwesomeIcon :icon="faTrash" />
+              Delete
+            </DropdownItem>
+          </Dropdown>
         </div>
       </div>
     </div>
@@ -136,13 +148,14 @@ defineExpose({
 
 .item {
   display: flex;
+  position: relative;
   align-items: center;
   justify-content: center;
   width: 20%;
   aspect-ratio: 1;
   padding: 0.25rem;
 
-  &:hover {
+  &:hover:not(:has(.menu:hover)) {
     background-color: lightblue;
   }
 }
@@ -192,6 +205,28 @@ img {
 
 .overlay > .select {
   width: auto;
+}
 
+.menu {
+  top: 0px;
+  right: 0px;
+}
+
+.dropdown-item {
+  padding: 0.5rem;
+  cursor: pointer;
+
+  &:hover {
+    background-color: lightblue;
+  }
+}
+
+.dropdown-item.delete {
+  color: red;
+
+  &:hover {
+    background-color: red;
+    color: white;
+  }
 }
 </style>
