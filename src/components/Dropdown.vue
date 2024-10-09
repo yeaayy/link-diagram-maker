@@ -1,57 +1,44 @@
 <script setup lang="ts">
-import { faEllipsisV } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { onMounted, ref, shallowRef, watch, type ShallowRef, provide } from 'vue';
+import { provide, ref, shallowRef, watch, type ShallowRef, watchEffect } from 'vue';
+
+const prop = defineProps<{
+  relative: HTMLElement | null
+}>();
 
 const open = ref(false);
-const dropdownButton = shallowRef(null! as HTMLElement);
-const dropdownList: ShallowRef<HTMLElement | null> = shallowRef(null);
+const dropdown: ShallowRef<HTMLElement | null> = shallowRef(null);
 
 provide('close-dropdown', () => {
   open.value = false;
 })
 
-watch(dropdownList, list => {
-  if (!list) return;
-  const bbox = dropdownButton.value.getBoundingClientRect();
-  console.log('bbox', bbox.bottom, bbox.right)
-  list.style.top = bbox.bottom + 'px';
-  list.style.right = window.innerWidth - bbox.right + 'px';
+watchEffect(() => {
+  if (!dropdown.value || !prop.relative) return;
+
+  const bbox = prop.relative.getBoundingClientRect();
+  dropdown.value.style.top = bbox.bottom + 'px';
+  dropdown.value.style.right = window.innerWidth - bbox.right + 'px';
 });
 
-function toggleMenu(e: Event) {
-  e.stopPropagation();
-  open.value = !open.value;
-}
+defineExpose({
+  toggle() {
+    open.value = !open.value;
+  }
+})
 </script>
 
 <template>
-  <div ref="dropdownButton" class="dropdown" @click="toggleMenu" v-bind="$attrs">
-    <FontAwesomeIcon class="fa-xl" :icon="faEllipsisV" />
-
-    <Teleport to="body" v-if="open">
-      <div class="overlay" @click="open = false"></div>
-      <div ref="dropdownList" class="dropdown-list">
-        <slot></slot>
-      </div>
-    </Teleport>
-  </div>
+  <Teleport to="body" v-if="open">
+    <div class="overlay" @click="open = false"></div>
+    <div ref="dropdown" class="dropdown">
+      <slot></slot>
+    </div>
+  </Teleport>
 </template>
 
 <style scoped>
+
 .dropdown {
-  position: absolute;
-  text-align: center;
-  padding: 0.25rem;
-  width: 2rem;
-  height: 2rem;
-
-  &:hover:not(:has(.dropdown-item:hover)) {
-    background-color: lightblue;
-  }
-}
-
-.dropdown-list {
   position: absolute;
   right: 0px;
   z-index: 99;

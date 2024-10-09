@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
-import { useLoading } from '@/loading';
-import http from '@/http';
-import { useRouter } from 'vue-router';
-import { shallowRef } from 'vue';
 import BoardItem from '@/components/BoardItem.vue';
+import http from '@/http';
+import { useLoading } from '@/loading';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { shallowRef, triggerRef } from 'vue';
+import { useRouter } from 'vue-router';
 
 type BoardData = {
   name: string,
@@ -39,6 +39,32 @@ function createNewBoard() {
     }
   }).finally(() => loading(false));
 }
+
+async function onDelete(id: string) {
+  loading();
+  try {
+    const { data } = await http.post('board/delete.php', { id });
+    if (data.success) {
+      boards.value = boards.value.filter(b => b.id !== id);
+    }
+  } catch(e) {}
+  loading(false);
+}
+
+async function onCopy(id: string) {
+  loading();
+  try {
+    const { data } = await http.post('board/duplicate.php', { id });
+    if (data.success) {
+      boards.value.push({
+        id: data.id,
+        name: data.name,
+      });
+      triggerRef(boards);
+    }
+  } catch(e) {}
+  loading(false);
+}
 </script>
 
 <template>
@@ -50,7 +76,7 @@ function createNewBoard() {
     </button>
 
     <div class="row">
-      <BoardItem v-for="board of boards" :name="board.name" :id="board.id" />
+      <BoardItem v-for="board of boards" :key="board.id" :name="board.name" :id="board.id" @delete="onDelete" @copy="onCopy" />
     </div>
   </div>
 </template>

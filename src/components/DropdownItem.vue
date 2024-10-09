@@ -9,3 +9,14 @@ const closeDropdown = inject<() => void>('close-dropdown');
     <slot />
   </div>
 </template>
+
+<style scoped>
+div {
+  cursor: pointer;
+  padding: 0.5rem;
+
+  &:hover {
+    background-color: lightblue;
+  }
+}
+</style>
