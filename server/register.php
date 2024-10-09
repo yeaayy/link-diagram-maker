@@ -21,6 +21,7 @@ if ($s->fetch()) {
       'username' => 'Username already been used',
     ],
   ]);
+  http_response_code(409);
   exit();
 }
 
@@ -34,5 +35,5 @@ $s->execute([
 $_SESSION['user_id'] = $db->lastInsertId();
 
 echo json_encode([
-  'error' => false,
+  'success' => true,
 ]);

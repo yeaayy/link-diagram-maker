@@ -2,7 +2,7 @@
 import { provide, ref, shallowRef, watch, type ShallowRef, watchEffect } from 'vue';
 
 const prop = defineProps<{
-  relative: HTMLElement | null
+  relative?: HTMLElement | null
 }>();
 
 const open = ref(false);

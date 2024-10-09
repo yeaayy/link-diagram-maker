@@ -3,7 +3,7 @@ import { imageStorageKey } from '@/ImageStorage';
 import ConnectionEditor from '@/components/ConnectionEditor.vue';
 import NoteEditor from '@/components/NoteEditor.vue';
 import Toolbar from '@/components/Toolbar.vue';
-import http from '@/http';
+import { useHttp } from '@/http';
 import { BoardView } from '@/model/BoardView';
 import { ConnectionView } from '@/model/ConnectionView';
 import { NoteView } from '@/model/NoteView';
@@ -17,6 +17,7 @@ import { useRoute, useRouter } from 'vue-router';
 
 let px = 0, py = 0;
 const router = useRouter();
+const http = useHttp();
 const boardId = useRoute().params.id;
 const root = shallowRef(null! as HTMLDivElement);
 const svg = shallowRef(null! as SVGElement);
@@ -48,15 +49,7 @@ if (import.meta.env.DEV) {
   window.board = board.value;
 }
 
-http.get('board/get.php', {
-  params: {
-    id: boardId,
-  }
-}).then(({ data }) => {
-  if (data.error) {
-    router.push({ name: 'my-boards' });
-    return
-  }
+http.board.get(boardId as string).then(({ data }) => {
   try {
     board.value.name = data.name;
     board.value.editable = data.editable;

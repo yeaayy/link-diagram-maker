@@ -8,4 +8,7 @@ $s->execute([
   'user_id' => $user_id,
 ]);
 
-echo json_encode($s->fetchAll());
+echo json_encode([
+  'success' => true,
+  'result' => $s->fetchAll(),
+]);

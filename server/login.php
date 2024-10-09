@@ -15,6 +15,7 @@ function incorrect() {
       'password' => 'Username or password incorrect',
     ],
   ]);
+  http_response_code(403);
   exit;
 }
 
@@ -34,5 +35,5 @@ if (!password_verify($password, $row['password'])) {
 $_SESSION['user_id'] = $row['id'];
 
 echo json_encode([
-  'error' => false,
+  'success' => true,
 ]);

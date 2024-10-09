@@ -55,7 +55,6 @@ $s->execute([
 $conns = [];
 while ($row = $s->fetch()) {
   array_push($conns, [
-    'id' => $row['id'],
     'note_1' => $row['note_1'],
     'note_2' => $row['note_2'],
     'pos_1' => $row['pos_1'],

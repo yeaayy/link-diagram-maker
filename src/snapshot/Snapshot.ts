@@ -69,7 +69,7 @@ export class Snapshot {
     return `${conn.a.id},${conn.pa}>${conn.b.id},${conn.pb}`;
   }
 
-  public toRaw(): Object {
+  public toRaw() {
     const result = {
       id: this.boardId,
       note: [] as NoteSnapshot[],

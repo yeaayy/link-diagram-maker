@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useConfirm } from '@/confirm';
-import { useLoading } from '@/loading';
 import { faCopy, faEllipsisV, faPencil, faTrash, faWarning } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { shallowRef, type ComponentInstance, type ShallowRef } from 'vue';
@@ -11,7 +10,6 @@ import DropdownItem from './DropdownItem.vue';
 
 const router = useRouter();
 const confirm = useConfirm();
-const loading = useLoading();
 const dropdown = shallowRef(null! as ComponentInstance<typeof Dropdown>)
 const menuButton: ShallowRef<null | ComponentInstance<typeof FontAwesomeIcon>> = shallowRef(null);
 const prop = defineProps<{

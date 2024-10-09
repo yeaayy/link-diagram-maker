@@ -16,7 +16,7 @@ $s->execute([
 $row = $s->fetch();
 if (!$row) {
   echo json_encode([
-    'error' => true,
+    'success' => false,
     'msg' => 'Image not found',
   ]);
   exit;
@@ -31,5 +31,5 @@ $s->execute([
 delete_file($row['path']);
 
 echo json_encode([
-  'error' => false,
+  'success' => true,
 ]);

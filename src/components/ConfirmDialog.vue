@@ -38,7 +38,6 @@ defineExpose({
     if (pendingResolve) {
       pendingResolve(false);
       pendingResolve = null;
-      // pendingResult = null;
     }
     return new Promise<boolean>(resolve => {
       pendingResolve = resolve;

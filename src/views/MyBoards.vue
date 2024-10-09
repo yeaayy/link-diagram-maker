@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import BoardItem from '@/components/BoardItem.vue';
-import http from '@/http';
+import { useHttp } from '@/http';
 import { useLoading } from '@/loading';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
@@ -13,23 +13,23 @@ type BoardData = {
 }
 
 const loading = useLoading();
+const http = useHttp();
 const router = useRouter();
 const boards = shallowRef([] as BoardData[]);
 
 loading(true);
-http.get('board/all.php').then(({ data }) => {
-  if (data.error) {
-    router.push({ name: 'login' });
-    return;
+http.board.getAll().then(({ data }) => {
+  if (data.success) {
+    boards.value = data.result;
   }
-  boards.value = data.result;
 }).finally(() => loading(false));
 
-function createNewBoard() {
-  loading(true);
+async function createNewBoard() {
+  loading();
 
-  http.post('board/create.php').then(({ data }) => {
-    if (!data.error) {
+  try {
+    const { data } = await http.board.create();
+    if (data.success) {
       router.push({
         name: 'board',
         params: {
@@ -37,24 +37,29 @@ function createNewBoard() {
         }
       });
     }
-  }).finally(() => loading(false));
+  } catch(e) {
+    console.log(e);
+  }
+  loading(false)
 }
 
 async function onDelete(id: string) {
   loading();
   try {
-    const { data } = await http.post('board/delete.php', { id });
+    const { data } = await http.board.delete(id);
     if (data.success) {
       boards.value = boards.value.filter(b => b.id !== id);
     }
-  } catch(e) {}
+  } catch(e) {
+    console.log(e);
+  }
   loading(false);
 }
 
 async function onCopy(id: string) {
   loading();
   try {
-    const { data } = await http.post('board/duplicate.php', { id });
+    const { data } = await http.board.copy(id);
     if (data.success) {
       boards.value.push({
         id: data.id,
@@ -62,14 +67,16 @@ async function onCopy(id: string) {
       });
       triggerRef(boards);
     }
-  } catch(e) {}
+  } catch(e) {
+    console.log(e);
+  }
   loading(false);
 }
 </script>
 
 <template>
   <div id="my-board">
-    <h3>MY BOARDS</h3>
+    <h3>MY DIAGRAMS</h3>
     <button @click="createNewBoard">
       <FontAwesomeIcon :icon="faPlus" />
       Create

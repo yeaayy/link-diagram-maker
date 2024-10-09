@@ -1,8 +1,8 @@
 import { AxiosError } from "axios";
 import { shallowRef, triggerRef, type InjectionKey } from "vue";
 import type { Router } from "vue-router";
-import http from "./http";
 import { StoredImage } from "./model/StoredImage";
+import type { HttpClient } from "./http";
 
 export class ImageStorage {
   private images = shallowRef([] as StoredImage[]);
@@ -10,7 +10,7 @@ export class ImageStorage {
   private fetched = false;
 
   constructor(
-    private router: Router,
+    private http: HttpClient,
   ) {}
 
   public add(id: any, path: string, name: string, trigger = true) {
@@ -40,19 +40,14 @@ export class ImageStorage {
     }
     while (true) {
       try {
-        const { data } = await http.get('img/get.php');
-        for (const item of data) {
+        const { data } = await this.http.img.get();
+        for (const item of data.result) {
           this.getOrAdd(item.id, item.path, item.name, false);
         }
         triggerRef(this.images);
         break
       } catch(e: unknown) {
-        if (e instanceof AxiosError) {
-          if (e.status === 401) {
-            this.router.push({ name: 'login' });
-            return [];
-          }
-        }
+        console.log(e);
       }
     }
     this.fetched = true;
@@ -60,27 +55,19 @@ export class ImageStorage {
   }
 
   public async upload(file: File): Promise<StoredImage> {
-    const formData = new FormData();
-    formData.append('image', file);
-    const { data } = await http.post('img/upload.php', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const { data } = await this.http.img.upload(file);
     return this.add(data.id, data.path, data.name);
   }
 
   public async delete(img: StoredImage): Promise<boolean> {
-    const { data } = await http.post('img/delete.php', {
-      img: img.id,
-    });
-    if (!data.error) {
+    const { data } = await this.http.img.delete(img.id);
+    if (data.success) {
       this.map.delete(img.id);
       const index = this.images.value.findIndex(i => i.id == img.id);
       this.images.value.splice(index, 1);
       triggerRef(this.images);
     }
-    return data.error === false;
+    return data.success;
   }
 }
 

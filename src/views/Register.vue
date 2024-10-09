@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import MyInput from '@/components/MyInput.vue';
-import http from '@/http';
+import { useHttp } from '@/http';
 import { useLoading } from '@/loading';
 import { useVuelidate } from '@vuelidate/core';
 import { helpers, minLength, required, sameAs } from '@vuelidate/validators';
+import { AxiosError } from 'axios';
 import { computed, reactive, ref } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 
 const loading = useLoading();
 const router = useRouter();
+const http = useHttp();
 
 const data = reactive({
   username: '',
@@ -37,14 +39,13 @@ async function register(e: Event) {
   if (!result) return false;
   v.value.$clearExternalResults();
 
-  http.post('/register.php', {
-    username: data.username,
-    password: data.password,
-  }).then(({ data }) => {
-    if (data.error) {
-      extern.value = data.error;
-    } else {
+  http.auth.register(data.username, data.password).then(({ data }) => {
+    if (data.success) {
       router.push({ name: 'my-boards' });
+    }
+  }).catch(e => {
+    if (e instanceof AxiosError) {
+      extern.value = e.response?.data.error;
     }
   }).finally(() => loading(false));
   return false;

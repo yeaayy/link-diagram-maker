@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import http from '@/http';
 import type { BoardView } from '@/model/BoardView';
 import keyboard from '@/utils/keyboard';
 import { faHome, faSave } from '@fortawesome/free-solid-svg-icons';
@@ -8,6 +7,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import ClickToEdit from './ClickToEdit.vue';
 import { AxiosError } from 'axios';
+import { useHttp } from '@/http';
 
 const prop = defineProps<{
   board: BoardView;
@@ -15,8 +15,9 @@ const prop = defineProps<{
   editable: boolean;
 }>();
 
-let interval: number
+let interval: NodeJS.Timeout
 let pendingSave: Promise<void> | null
+const http = useHttp();
 const isDirty = ref(false);
 const router = useRouter();
 const boardName = computed({
@@ -27,10 +28,7 @@ const boardName = computed({
     if (prop.board.name === newName) return;
     prop.board.name = newName;
 
-    http.post('board/rename.php', {
-      name: newName,
-      id: prop.board.id,
-    }).then(result => {
+    http.board.rename(prop.board.id, newName).then(result => {
       boardName.value = newName;
     }).catch(e => {
       alert('Failed to rename');
@@ -46,7 +44,7 @@ async function doSave() {
 
   while (true) {
     try {
-      await http.post('board/update.php', input);
+      await http.board.update(input);
       break;
     } catch(e) {
       console.error(e);

@@ -18,13 +18,12 @@ $s->execute([
 if ($s->rowCount() === 0) {
   $s->debugDumpParams();
   echo json_encode([
-    'error' => 'Board not found',
-    'board_id' => $input['id'],
-    'user_id' => $user_id,
+    'success' => false,
+    'msg' => 'Board not found',
   ]);
   http_response_code(404);
 } else {
   echo json_encode([
-    'error' => false,
+    'success' => true,
   ]);
 }
