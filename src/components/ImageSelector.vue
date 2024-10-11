@@ -64,6 +64,7 @@ defineExpose({
   select() {
     selecting.value = true;
     show.value = true;
+    imageStorage.getAll();
     return new Promise<StoredImage | null>((resolve, reject) => {
       pendingReject = reject;
       pendingResolve = resolve;

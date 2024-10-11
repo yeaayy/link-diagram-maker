@@ -110,7 +110,7 @@ function isEditable() {
 function onFileDropped(file: File, e: DragEvent)  {
   imageStorage.upload(file).then((img => {
     const b = board.value;
-    b.createNote(e.clientX - b.dx, e.clientY - b.dy, '', img)
+    b.createNote(e.clientX / b.scale - b.dx, e.clientY / b.scale - b.dy, '', img)
   }));
 }
 
@@ -298,7 +298,6 @@ onBeforeUnmount(() => {
       '--shift-y': board.dy + 'px',
       '--scale': scale,
     }">
-      <!-- <div style="background-color: red; width: calc(1px / var(--scale)); height: calc(1px / var(--scale)); position: absolute;"></div> -->
     </div>
     <svg id="board-svg" ref="svg" :width="board.width" :height="board.height"
       :viewBox="[-board.dx, -board.dy, board.width / scale, board.height / scale].join(' ')">

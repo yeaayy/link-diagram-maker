@@ -1,8 +1,6 @@
-import { AxiosError } from "axios";
 import { shallowRef, triggerRef, type InjectionKey } from "vue";
-import type { Router } from "vue-router";
-import { StoredImage } from "./model/StoredImage";
 import type { HttpClient } from "./http";
+import { StoredImage } from "./model/StoredImage";
 
 export class ImageStorage {
   private images = shallowRef([] as StoredImage[]);
@@ -30,7 +28,6 @@ export class ImageStorage {
   }
 
   public getAllRef() {
-    this.getAll();
     return this.images;
   }
 
