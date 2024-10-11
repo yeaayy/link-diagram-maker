@@ -9,6 +9,7 @@ import { useHttp } from '@/http';
 import { BoardView } from '@/model/BoardView';
 import { ConnectionView } from '@/model/ConnectionView';
 import { NoteView } from '@/model/NoteView';
+import type { StoredImage } from '@/model/StoredImage';
 import { DropArea } from '@/utils/DropArea';
 import PointerHandler, { type GenericPointerEvent, type PointerMoveEvent } from '@/utils/PointerHandler';
 import keyboard, { getModifier } from '@/utils/keyboard';
@@ -104,8 +105,11 @@ function onFileDropped(file: File, e: DragEvent)  {
 }
 
 function onPointerIdle(ev: GenericPointerEvent, x: number, y: number) {
-  px = x;
-  py = y;
+  const target = ev.target as HTMLElement;
+  if (target.classList.contains('board')) {
+    px = x;
+    py = y;
+  }
 }
 
 function onPointerMove(ev: GenericPointerEvent, e: PointerMoveEvent) {
@@ -160,16 +164,17 @@ function onPreviewConnection(from: HTMLElement, toX: number, toY: number) {
   previewConnection.y2.baseVal.value = toY - board.value.dy;
 }
 
-function createNewNote() {
+function createNewNote(img: StoredImage | null = null) {
   unselect();
   const b = board.value
-  selectedNote.value = b.createNote(px - b.dx, py - b.dy, '');
+  selectedNote.value = b.createNote(px - b.dx, py - b.dy, '', img);
   selectedNote.value.highlight();
 }
 
 function createNewImageNote() {
-  createNewNote();
-  noteEditor.value.openImageSelector();
+  imageSelector.value.select()
+    .then(img => createNewNote(img))
+    .catch(() => {});
 }
 
 function onNoteCreated(note: NoteView) {
