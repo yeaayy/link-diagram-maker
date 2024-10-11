@@ -12,7 +12,7 @@ import PointerHandler, { type GenericPointerEvent, type PointerMoveEvent } from 
 import keyboard, { getModifier } from '@/utils/keyboard';
 import { faUpload } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { inject, onBeforeUnmount, onMounted, shallowRef, triggerRef, type ComponentInstance, type ShallowRef } from 'vue';
+import { inject, onBeforeUnmount, onMounted, shallowRef, triggerRef, type ComponentInstance, type ShallowRef, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 let px = 0, py = 0;
@@ -41,6 +41,16 @@ const board = shallowRef(new BoardView(boardId as string));
 board.value.noteCreated.listen(onNoteCreated);
 board.value.connectionCreated.listen(onConnectionCreated);
 board.value.previewConnection.listen(onPreviewConnection);
+
+const boardName = computed<string>({
+  get() {
+    return board.value.name;
+  },
+  set(v)  {
+    board.value.name = v
+    triggerRef(board)
+  }
+})
 
 dropArea.dropped.listen(onFileDropped);
 
@@ -232,7 +242,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <Toolbar :board="board" :editable="board.editable" :board-name="board.name" />
+  <Toolbar :board="board" :editable="board.editable" v-model:board-name="boardName" />
 
   <div class="content">
     <div ref="root" class="board" :style="{

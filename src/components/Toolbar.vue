@@ -1,41 +1,33 @@
 <script setup lang="ts">
+import { useHttp } from '@/http';
 import type { BoardView } from '@/model/BoardView';
 import keyboard from '@/utils/keyboard';
 import { faHome, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { AxiosError } from 'axios';
+import { onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue';
 import { useRouter } from 'vue-router';
 import ClickToEdit from './ClickToEdit.vue';
-import { AxiosError } from 'axios';
-import { useHttp } from '@/http';
 
 const prop = defineProps<{
   board: BoardView;
-  boardName: string;
   editable: boolean;
 }>();
 
 let interval: NodeJS.Timeout
 let pendingSave: Promise<void> | null
+const boardName = defineModel<string>('boardName', { default: '' });
 const http = useHttp();
 const isDirty = ref(false);
 const router = useRouter();
-const boardName = computed({
-  get() {
-    return prop.boardName;
-  },
-  set(newName) {
-    if (prop.board.name === newName) return;
-    prop.board.name = newName;
 
-    http.board.rename(prop.board.id, newName).then(result => {
-      boardName.value = newName;
-    }).catch(e => {
+function renameBoard(newName: string) {
+  http.board.rename(prop.board.id, newName)
+  .catch(e => {
       alert('Failed to rename');
       console.log(e)
     })
-  }
-});
+}
 
 async function doSave() {
   const snapshot = prop.board.snapshot;
@@ -99,7 +91,7 @@ onBeforeUnmount(() => {
   <div class="toolbar">
     <div class="title">
       <FontAwesomeIcon class="icon" :icon="faHome" @click="gotoMyBoards" title="Back to my boards" />
-      <ClickToEdit max-length="255" :read-only="!prop.board.editable" v-model="boardName" />
+      <ClickToEdit max-length="255" :read-only="!prop.board.editable" v-model="boardName" @finish="renameBoard" />
     </div>
     <div v-if="editable">
       <FontAwesomeIcon :class="{

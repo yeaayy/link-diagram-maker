@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { ref, shallowRef, watch } from 'vue';
+import { ref, shallowRef, watch, watchEffect } from 'vue';
 
 const prop = withDefaults(defineProps<{
-  modelValue: string;
   readOnly: boolean,
 }>(), {
   readOnly: false,
 });
+
+const model = defineModel<string>({ default: '' });
+const tmp = ref(model.value);
 
 const emit = defineEmits<{
   finish: [text: string];
@@ -16,14 +18,13 @@ const emit = defineEmits<{
 const editing = shallowRef(false);
 const span = shallowRef(null! as HTMLSpanElement);
 const input = shallowRef(null! as HTMLInputElement);
-const tmp = ref(prop.modelValue);
-
-watch(() => prop.modelValue, value => {
-  tmp.value = value;
-})
 
 watch(input, input => {
   input?.focus();
+})
+
+watchEffect(() => {
+  tmp.value = model.value
 })
 
 function beginEdit() {
@@ -32,20 +33,29 @@ function beginEdit() {
   }
 }
 
-function onInput(e: Event) {
-  const target = e.target as HTMLInputElement;
-  tmp.value = target.value;
+function finishEdit() {
+  editing.value = false;
+  model.value = tmp.value;
+  emit('finish', tmp.value);
 }
 
-function finishEdit(e: FocusEvent) {
-  const target = e.target as HTMLInputElement;
+function cancelEdit() {
   editing.value = false;
-  emit('update:modelValue', target.value);
+  tmp.value = model.value;
 }
 </script>
 
 <template>
-  <input v-if="editing" ref="input" type="text" :value="tmp" v-bind="$attrs" @input="onInput" @blur="finishEdit">
+  <input
+    ref="input"
+    type="text"
+    v-if="editing"
+    v-model="tmp"
+    v-bind="$attrs"
+    @blur="finishEdit"
+    @keydown.escape.prevent="cancelEdit"
+    @keydown.enter="finishEdit" />
+
   <span v-else ref="span" @click="beginEdit">{{ tmp }}</span>
 </template>
 
