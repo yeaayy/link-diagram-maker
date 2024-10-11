@@ -6,10 +6,12 @@ import { shallowRef, type ComponentInstance, type ShallowRef } from 'vue';
 import { useRouter } from 'vue-router';
 import Dropdown from './Dropdown.vue';
 import DropdownItem from './DropdownItem.vue';
+import { usePrompt } from '@/prompt';
 
 
 const router = useRouter();
 const confirm = useConfirm();
+const prompt = usePrompt();
 const dropdown = shallowRef(null! as ComponentInstance<typeof Dropdown>)
 const menuButton: ShallowRef<null | ComponentInstance<typeof FontAwesomeIcon>> = shallowRef(null);
 const prop = defineProps<{
@@ -18,7 +20,7 @@ const prop = defineProps<{
 }>();
 const emit = defineEmits<{
   delete: [id: string],
-  rename: [id: string],
+  rename: [id: string, newName: string, oldName: string],
   copy: [id: string],
 }>();
 
@@ -35,6 +37,16 @@ async function confirmDelete() {
   });
   if (!confirmed) return;
   emit('delete', prop.id);
+}
+
+async function promptRename() {
+  const newName = await prompt({
+    title: 'Rename',
+    icon: faPencil,
+    default: prop.name,
+  });
+  if (!newName) return;
+  emit('rename', prop.id, newName, prop.name);
 }
 
 function open() {
@@ -54,7 +66,7 @@ function open() {
     <FontAwesomeIcon ref="menuButton" @click="openMenu" class="menu" :icon="faEllipsisV" />
 
     <Dropdown ref="dropdown" :relative="menuButton?.$el">
-      <DropdownItem>
+      <DropdownItem @click="promptRename">
         <FontAwesomeIcon :icon="faPencil" />
         Rename
       </DropdownItem>

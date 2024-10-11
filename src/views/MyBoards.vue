@@ -72,6 +72,25 @@ async function onCopy(id: string) {
   }
   loading(false);
 }
+
+async function onRename(id: string, newName: string) {
+  loading();
+  try {
+    const { data } = await http.board.rename(id, newName);
+    if (data.success) {
+      for (const board of boards.value) {
+        if (board.id != id) continue;
+        board.name = newName;
+        break;
+      }
+      triggerRef(boards);
+    }
+  } catch(e) {
+    console.log(e);
+  }
+  loading(false);
+}
+
 </script>
 
 <template>
@@ -83,7 +102,7 @@ async function onCopy(id: string) {
     </button>
 
     <div class="row">
-      <BoardItem v-for="board of boards" :key="board.id" :name="board.name" :id="board.id" @delete="onDelete" @copy="onCopy" />
+      <BoardItem v-for="board of boards" :key="board.id" :name="board.name" :id="board.id" @delete="onDelete" @copy="onCopy" @rename="onRename" />
     </div>
   </div>
 </template>

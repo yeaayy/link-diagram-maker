@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-const show = ref(false);
+const prop = withDefaults(defineProps<{
+  show?: boolean;
+}>(), {
+  show: false,
+});
+
+const show = ref(prop.show);
 
 defineExpose({
   show() {

@@ -5,13 +5,17 @@ import { provide, ref, shallowRef, type ComponentInstance } from 'vue';
 import { RouterView, useRouter } from 'vue-router';
 import { ImageStorage, imageStorageKey } from './ImageStorage';
 import ConfirmDialog from './components/ConfirmDialog.vue';
+import PromptDialog from './components/PromptDialog.vue';
 import { HttpClient, httpKey } from './http';
+import { promptDialogKey, type PromptDialogData } from './prompt';
 
 const router = useRouter();
 const isLoading = ref(false);
 const http = new HttpClient(router);
 const confirmDialog = shallowRef(null! as ComponentInstance<typeof ConfirmDialog>);
+const promptDialog = shallowRef(null! as ComponentInstance<typeof PromptDialog>);
 const confirmDialogData = shallowRef<ConfirmDialogData>({});
+const promptDialogData = shallowRef<PromptDialogData>({});
 
 function setLoading(loading = true) {
   isLoading.value = loading;
@@ -30,25 +34,41 @@ function showConfirm(titleOrData: string | ConfirmDialogData) {
   return confirmDialog.value.show();
 }
 
+function showPrompt(titleOrData: string | PromptDialogData) {
+  if (typeof titleOrData === 'string') {
+    promptDialogData.value = {
+      title: titleOrData,
+    }
+  } else {
+    promptDialogData.value = {
+      ...titleOrData,
+    };
+  }
+  return promptDialog.value.show();
+}
+
 provide(loadingKey, setLoading);
 provide(httpKey, http);
 provide(imageStorageKey, new ImageStorage(http));
 provide(confirmDialogKey, showConfirm);
+provide(promptDialogKey, showPrompt);
 </script>
 
 <template>
   <RouterView />
 
+  <ConfirmDialog ref="confirmDialog" v-bind="confirmDialogData" />
+  <PromptDialog ref="promptDialog" v-bind="promptDialogData" />
+
   <div v-if="isLoading" class="container">
     <div class="spin"></div>
   </div>
-
-  <ConfirmDialog ref="confirmDialog" v-bind="confirmDialogData"></ConfirmDialog>
 </template>
 
 <style scoped>
 .container {
   position: absolute;
+  z-index: 999;
   display: flex;
   left: 0px;
   top: 0px;
