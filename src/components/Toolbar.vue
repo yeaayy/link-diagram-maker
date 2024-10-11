@@ -102,7 +102,7 @@ onBeforeUnmount(() => {
           save: true,
           enable: isDirty,
         }" :icon="faSave"
-        @click="onSave" title="Save" />
+        @click="onSave" title="Save (CTRL+S)" />
 
       <FontAwesomeIcon class="icon enable" :icon="faImage" @click="imageSelector.open()" title="Open All Image" />
     </div>

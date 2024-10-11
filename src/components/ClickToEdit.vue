@@ -56,12 +56,24 @@ function cancelEdit() {
     @keydown.escape.prevent="cancelEdit"
     @keydown.enter="finishEdit" />
 
-  <span v-else ref="span" @click="beginEdit">{{ tmp }}</span>
+  <span
+    ref="span"
+    v-else
+    :class="{
+      readonly: readOnly,
+    }"
+    :title="readOnly ? undefined : 'Click to edit'"
+    @click="beginEdit"
+  >{{ tmp }}</span>
 </template>
 
 <style scoped>
 span {
   display: inline-block;
   padding: 4px 3px;
+}
+
+span.readonly {
+  cursor: default;
 }
 </style>

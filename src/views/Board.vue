@@ -15,7 +15,7 @@ import PointerHandler, { type GenericPointerEvent, type PointerMoveEvent } from 
 import keyboard, { getModifier } from '@/utils/keyboard';
 import { faUpload } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { computed, inject, onBeforeUnmount, onMounted, provide, shallowRef, triggerRef, type ComponentInstance, type ShallowRef } from 'vue';
+import { computed, inject, onBeforeUnmount, onMounted, provide, shallowRef, triggerRef, type ComponentInstance, type ShallowRef, readonly } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 let px = 0, py = 0;
@@ -292,7 +292,10 @@ onBeforeUnmount(() => {
 <template>
   <Toolbar :board="board" :editable="board.editable" v-model:board-name="boardName" />
 
-  <div ref="root" class="content">
+  <div ref="root" :class="{
+    content: true,
+    readonly: !board.editable,
+  }">
     <div ref="noteContainer" class="board" :style="{
       '--shift-x': board.dx + 'px',
       '--shift-y': board.dy + 'px',

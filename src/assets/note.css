@@ -70,6 +70,10 @@
   background-color: #ff9d9d;
 }
 
+.content.readonly .note .dot {
+  opacity: 0;
+}
+
 .preview-connection {
   display: none;
   pointer-events: none;

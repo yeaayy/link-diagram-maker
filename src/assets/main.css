@@ -27,6 +27,10 @@ line {
   }
 }
 
+.content.readonly line:hover {
+  filter: none;
+}
+
 .row {
   margin-top: 0.5rem;
 }
