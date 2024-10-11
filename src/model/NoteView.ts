@@ -162,8 +162,8 @@ export class NoteView {
   }
 
   private onPointerMove(ev: GenericPointerEvent, e: PointerMoveEvent) {
-    this._x += e.dx;
-    this._y += e.dy;
+    this._x += e.dx / this.board.scale;
+    this._y += e.dy / this.board.scale;
     this.updatePosition();
 
     this.board.snapshot.push(new SAEditNote(this, ['x', 'y']));
@@ -173,6 +173,7 @@ export class NoteView {
     const target = e.target as HTMLElement;
     this.dragFrom = parseInt(target.dataset['pos']!);
     document.body.classList.add('dragging-dot');
+    this.board.previewConnection.emit(this.dots[this.dragFrom], px, py);
   }
 
   private onDraggingDot(ev: GenericPointerEvent, e: PointerMoveEvent) {

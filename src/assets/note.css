@@ -6,7 +6,9 @@
   top: calc(var(--shift-y) + var(--y));
   background-color: white;
   padding: var(--padding);
-  border: 1px solid grey;
+  border-style: solid;
+  border-color: grey;
+  border-width: calc(1px / var(--scale));
   border-radius: 0.25rem;
   width: 16rem;
   user-select: none;
@@ -30,7 +32,7 @@
     }
 
     > .dot {
-      --size: 1rem;
+      --size: calc(1rem / var(--scale));
       --delta1: calc((var(--padding) + var(--size)) * -0.5);
       --delta2: calc(50% - var(--size) * 0.5);
       position: absolute;
@@ -70,6 +72,7 @@
 
 .preview-connection {
   display: none;
+  pointer-events: none;
 
   &:hover {
     filter: none;

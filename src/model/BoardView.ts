@@ -9,6 +9,7 @@ export class BoardView {
   public dy = 0;
   public width = 0;
   public height = 0;
+  public scale = 1;
 
   public defaultColor = 'ff0000';
   public defaultSize = 5;

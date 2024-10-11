@@ -11,11 +11,12 @@
   font-family: Arial, Helvetica, sans-serif;
   margin: 0px;
   padding: 0px;
+  overflow: hidden;
 }
 
 line {
   stroke-linecap: round;
-  pointer-events: initial;
+  pointer-events: stroke;
 
   &:hover {
     filter: invert(1);

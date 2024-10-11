@@ -111,9 +111,10 @@ export class ConnectionView {
     const view = this.view;
     const a = this.a.dots[this.pa].getBoundingClientRect();
     const b = this.b.dots[this.pb].getBoundingClientRect();
-    view.x1.baseVal.value = a.x + a.width / 2 - this.board.dx;
-    view.y1.baseVal.value = a.y + a.height / 2 - this.board.dy;
-    view.x2.baseVal.value = b.x + b.width / 2 - this.board.dx;
-    view.y2.baseVal.value = b.y + b.height / 2 - this.board.dy;
+    const scl = this.board.scale;
+    view.x1.baseVal.value = (a.x + a.width / 2) / scl - this.board.dx;
+    view.y1.baseVal.value = (a.y + a.height / 2) / scl - this.board.dy;
+    view.x2.baseVal.value = (b.x + b.width / 2) / scl - this.board.dx;
+    view.y2.baseVal.value = (b.y + b.height / 2) / scl - this.board.dy;
   }
 }

@@ -23,6 +23,7 @@ const router = useRouter();
 const http = useHttp();
 const boardId = useRoute().params.id;
 const root = shallowRef(null! as HTMLDivElement);
+const noteContainer = shallowRef(null! as HTMLDivElement);
 const svg = shallowRef(null! as SVGElement);
 const previewConnection = document.createElementNS('http://www.w3.org/2000/svg', 'line');
 const selectedConnection: ShallowRef<null | ConnectionView> = shallowRef(null);
@@ -54,6 +55,15 @@ const board = shallowRef(new BoardView(boardId as string));
 board.value.noteCreated.listen(onNoteCreated);
 board.value.connectionCreated.listen(onConnectionCreated);
 board.value.previewConnection.listen(onPreviewConnection);
+
+const scale = computed<number>({
+  get() {
+    return board.value.scale;
+  },
+  set(v) {
+    board.value.scale = v;
+  }
+});
 
 const boardName = computed<string>({
   get() {
@@ -113,8 +123,8 @@ function onPointerIdle(ev: GenericPointerEvent, x: number, y: number) {
 }
 
 function onPointerMove(ev: GenericPointerEvent, e: PointerMoveEvent) {
-  board.value.dx += e.dx;
-  board.value.dy += e.dy;
+  board.value.dx += e.dx / scale.value;
+  board.value.dy += e.dy / scale.value;
   triggerRef(board);
 }
 
@@ -122,8 +132,19 @@ function onWheel(e: WheelEvent) {
   const mod = getModifier(e);
   if (mod == '' || mod == 'shift') {
     e.preventDefault();
-    board.value.dx -= Math.sign(e.shiftKey ? e.deltaY : e.deltaX) * 25;
-    board.value.dy -= Math.sign(e.shiftKey ? e.deltaX : e.deltaY) * 25;
+    board.value.dx -= Math.sign(e.shiftKey ? e.deltaY : e.deltaX) * 25 / scale.value;
+    board.value.dy -= Math.sign(e.shiftKey ? e.deltaX : e.deltaY) * 25 / scale.value;
+    triggerRef(board);
+  } else if (mod === 'ctrl') {
+    e.preventDefault();
+    const step = 0.9;
+    const deltaScale = e.deltaY < 0 ? 1 / step : step;
+    const oldScale = board.value.scale
+    board.value.scale = oldScale * deltaScale;
+    const dx = board.value.dx;
+    const dy = board.value.dy;
+    board.value.dx = (e.clientX  / oldScale - dx) * (1 / deltaScale - 1) + dx / deltaScale;
+    board.value.dy = (e.clientY  / oldScale - dy) * (1 / deltaScale - 1) + dy / deltaScale;
     triggerRef(board);
   }
 }
@@ -156,18 +177,19 @@ function unselect() {
 
 function onPreviewConnection(from: HTMLElement, toX: number, toY: number) {
   const start = from.getBoundingClientRect();
+  const scl = scale.value;
   previewConnection.setAttribute('stroke', '#' + board.value.defaultColor);
   previewConnection.setAttribute('stroke-width', board.value.defaultSize.toString());
-  previewConnection.x1.baseVal.value = start.x + start.width / 2 - board.value.dx;
-  previewConnection.y1.baseVal.value = start.y + start.height / 2 - board.value.dy;
-  previewConnection.x2.baseVal.value = toX - board.value.dx;
-  previewConnection.y2.baseVal.value = toY - board.value.dy;
+  previewConnection.x1.baseVal.value = (start.x + start.width / 2) / scl - board.value.dx;
+  previewConnection.y1.baseVal.value = (start.y + start.height / 2) / scl - board.value.dy;
+  previewConnection.x2.baseVal.value = toX / scl - board.value.dx;
+  previewConnection.y2.baseVal.value = toY / scl - board.value.dy;
 }
 
 function createNewNote(img: StoredImage | null = null) {
   unselect();
   const b = board.value
-  selectedNote.value = b.createNote(px - b.dx, py - b.dy, '', img);
+  selectedNote.value = b.createNote(px / b.scale - b.dx, py / b.scale - b.dy, '', img);
   selectedNote.value.highlight();
 }
 
@@ -178,7 +200,7 @@ function createNewImageNote() {
 }
 
 function onNoteCreated(note: NoteView) {
-  note.attach(root.value);
+  note.attach(noteContainer.value);
   if (isEditable()) {
     note.clicked.listen(onNoteClicked);
     note.beforeDetached.listen(onBeforeNoteDetached);
@@ -261,14 +283,16 @@ onBeforeUnmount(() => {
 <template>
   <Toolbar :board="board" :editable="board.editable" v-model:board-name="boardName" />
 
-  <div class="content">
-    <div ref="root" class="board" :style="{
+  <div ref="root" class="content">
+    <div ref="noteContainer" class="board" :style="{
       '--shift-x': board.dx + 'px',
       '--shift-y': board.dy + 'px',
+      '--scale': scale,
     }">
+      <!-- <div style="background-color: red; width: calc(1px / var(--scale)); height: calc(1px / var(--scale)); position: absolute;"></div> -->
     </div>
     <svg id="board-svg" ref="svg" :width="board.width" :height="board.height"
-      :viewBox="[-board.dx, -board.dy, board.width, board.height].join(' ')">
+      :viewBox="[-board.dx, -board.dy, board.width / scale, board.height / scale].join(' ')">
     </svg>
 
     <div class="overlay">
@@ -292,8 +316,10 @@ onBeforeUnmount(() => {
 }
 
 .board {
-  width: 100%;
-  height: 100%;
+  width: calc(100% / var(--scale));
+  height: calc(100% / var(--scale));
+  transform-origin: top left;
+  transform: scale(var(--scale));
   position: relative;
 }
 
@@ -319,7 +345,7 @@ onBeforeUnmount(() => {
   pointer-events: none;
 }
 
-.dropping ~ .overlay {
+.dropping > .overlay {
   display: flex;
 }
 </style>
