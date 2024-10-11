@@ -15,5 +15,5 @@ $s->execute([
 ]);
 
 echo json_encode([
-  'success' => true,
+  'success' => $s->rowCount() == 1,
 ]);

@@ -74,11 +74,7 @@ export class HttpClient {
           x: string,
           y: string,
           text: string,
-          img: null | {
-            id: any,
-            path: string,
-            name: string,
-          },
+          img: null | string,
         }[],
         conns: {
           note_1: string,
@@ -142,6 +138,7 @@ export class HttpClient {
           id: any;
           name: string;
           path: string;
+          hash: string;
         }[],
       }>('img/get.php');
     }

@@ -1,9 +1,10 @@
 
 export class StoredImage{
   constructor(
-    public readonly id: any,
     public readonly path: string,
-    public readonly name: string,
+    public id?: any,
+    public name?: string,
+    public hash?: string,
   ) {}
 
   get fullPath() {

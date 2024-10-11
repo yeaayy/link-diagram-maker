@@ -25,7 +25,7 @@ $name = $row['name'];
 $board_owner = $row['owner'];
 $board_id = $row['id'];
 
-$s = $db->prepare('SELECT n.note_id, n.x, n.y, n.text, n.image_id, i.path, i.name FROM `notes` AS n LEFT JOIN `images` AS i ON n.image_id = i.id WHERE n.board_id = :board_id');
+$s = $db->prepare('SELECT n.note_id, n.x, n.y, n.text, n.image_id, i.path, i.ext FROM `notes` AS n LEFT JOIN `images` AS i ON n.image_id = i.id WHERE n.board_id = :board_id');
 $s->execute([
   'board_id' => $board_id,
 ]);
@@ -33,11 +33,11 @@ $notes = [];
 while ($row = $s->fetch()) {
   $img = null;
   if (!empty($row['image_id'])) {
-    $img = [
-      'id' => $row['image_id'],
-      'path' => $row['path'],
-      'name' => $row['name'],
-    ];
+    // $img = [
+    //   'id' => $row['image_id'],
+    //   'path' => $row['path'] . '.' . $row['ext'],
+    // ];
+    $img = $row['path'] . '.' . $row['ext'];
   }
   array_push($notes, [
     'id' => $row['note_id'],

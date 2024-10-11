@@ -87,8 +87,13 @@ http.board.get(boardId as string).then(({ data }) => {
     board.value.name = data.name;
     board.value.editable = data.editable;
     for (const note of data.notes) {
-      const i = note.img
-      board.value.newNote(parseInt(note.id), parseFloat(note.x), parseFloat(note.y), note.text, i ? imageStorage.getOrAdd(i.id, i.path, i.name) : null);
+      board.value.newNote(
+        parseInt(note.id),
+        parseFloat(note.x),
+        parseFloat(note.y),
+        note.text,
+        note.img ? imageStorage.getOrAdd(note.img) : null
+      );
     }
     for (const conn of data.conns) {
       board.value.newConnection(parseInt(conn.note_1), parseInt(conn.pos_1), parseInt(conn.note_2), parseInt(conn.pos_2), conn.color, parseInt(conn.size));
@@ -283,7 +288,9 @@ onBeforeUnmount(() => {
   poinerHandler.detach();
   root.value.removeEventListener('wheel', onWheel);
   window.removeEventListener('resize', onWindowResize);
-  disableEditing();
+  if (board.value.editable) {
+    disableEditing();
+  }
   keyboard.removeShortcut('home', resetView);
   svg.value.removeChild(previewConnection);
 });

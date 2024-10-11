@@ -4,27 +4,24 @@ import { StoredImage } from "./model/StoredImage";
 
 export class ImageStorage {
   private images = shallowRef([] as StoredImage[]);
-  private map = new Map<any, StoredImage>();
+  private map = new Map<string, StoredImage>();
   private fetched = false;
 
   constructor(
     private http: HttpClient,
   ) {}
 
-  public add(id: any, path: string, name: string, trigger = true) {
-    const result = new StoredImage(id, path, name);
+  public add(path: string) {
+    const result = new StoredImage(path);
     this.images.value.push(result);
-    this.map.set(id, result);
-    if (trigger) {
-      triggerRef(this.images);
-    }
+    this.map.set(path, result);
     return result;
   }
 
-  public getOrAdd(id: any, path: string, name: string, trigger = true) {
-    const result = this.map.get(id);
+  public getOrAdd(path: string) {
+    const result = this.map.get(path);
     if (result) return result;
-    return this.add(id, path, name, trigger);
+    return this.add(path);
   }
 
   public getAllRef() {
@@ -39,7 +36,10 @@ export class ImageStorage {
       try {
         const { data } = await this.http.img.get();
         for (const item of data.result) {
-          this.getOrAdd(item.id, item.path, item.name, false);
+          const img = this.getOrAdd(item.path);
+          img.id = item.id;
+          img.name = item.name;
+          img.hash = item.hash;
         }
         triggerRef(this.images);
         break
@@ -52,8 +52,21 @@ export class ImageStorage {
   }
 
   public async upload(file: File): Promise<StoredImage> {
+    // Check if file already uploaded.
+    const hashBuffer = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
+    const hash = Array.from(new Uint8Array(hashBuffer)).map(v => v.toString(16).padStart(2, '0')).join('');
+    for (const img of await this.getAll()) {
+      if (img.hash === hash) {
+        return img;
+      }
+    }
+
     const { data } = await this.http.img.upload(file);
-    return this.add(data.id, data.path, data.name);
+    const result = this.getOrAdd(data.path);
+    result.id = data.id;
+    result.name = data.name;
+    result.hash = hash;
+    return result;
   }
 
   public async delete(img: StoredImage): Promise<boolean> {
