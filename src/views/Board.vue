@@ -253,17 +253,17 @@ onBeforeUnmount(() => {
     <svg id="board-svg" ref="svg" :width="board.width" :height="board.height"
       :viewBox="[-board.dx, -board.dy, board.width, board.height].join(' ')">
     </svg>
+
+    <div class="overlay">
+      <div>
+        <FontAwesomeIcon :icon="faUpload" />
+        Upload Image
+      </div>
+    </div>
   </div>
 
   <ConnectionEditor :connection="selectedConnection"></ConnectionEditor>
   <NoteEditor ref="noteEditor" :note="selectedNote"></NoteEditor>
-
-  <div class="overlay">
-    <div>
-      <FontAwesomeIcon :icon="faUpload" />
-      Upload Image
-    </div>
-  </div>
 </template>
 
 <style scoped>
