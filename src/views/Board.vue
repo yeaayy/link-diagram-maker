@@ -186,6 +186,13 @@ function onPreviewConnection(from: HTMLElement, toX: number, toY: number) {
   previewConnection.y2.baseVal.value = toY / scl - board.value.dy;
 }
 
+function resetView() {
+  board.value.dx = 0;
+  board.value.dy = 0;
+  board.value.scale = 1;
+  triggerRef(board);
+}
+
 function createNewNote(img: StoredImage | null = null) {
   unselect();
   const b = board.value
@@ -266,6 +273,7 @@ onMounted(async() => {
   keyboard.addShortcut('alt+n', createNewNote);
   keyboard.addShortcut('ctrl+shift+n', createNewNote);
   keyboard.addShortcut('alt+i', createNewImageNote);
+  keyboard.addShortcut('home', resetView);
 
   svg.value.appendChild(previewConnection);
   previewConnection.classList.add('preview-connection');
@@ -276,6 +284,7 @@ onBeforeUnmount(() => {
   root.value.removeEventListener('wheel', onWheel);
   window.removeEventListener('resize', onWindowResize);
   disableEditing();
+  keyboard.removeShortcut('home', resetView);
   svg.value.removeChild(previewConnection);
 });
 </script>
