@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { imageSelectorKey } from '@/ImageSelector';
 import { imageStorageKey } from '@/ImageStorage';
 import ConnectionEditor from '@/components/ConnectionEditor.vue';
+import ImageSelector from '@/components/ImageSelector.vue';
 import NoteEditor from '@/components/NoteEditor.vue';
 import Toolbar from '@/components/Toolbar.vue';
 import { useHttp } from '@/http';
@@ -12,7 +14,7 @@ import PointerHandler, { type GenericPointerEvent, type PointerMoveEvent } from 
 import keyboard, { getModifier } from '@/utils/keyboard';
 import { faUpload } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { inject, onBeforeUnmount, onMounted, shallowRef, triggerRef, type ComponentInstance, type ShallowRef, computed } from 'vue';
+import { computed, inject, onBeforeUnmount, onMounted, provide, shallowRef, triggerRef, type ComponentInstance, type ShallowRef } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 let px = 0, py = 0;
@@ -25,6 +27,7 @@ const previewConnection = document.createElementNS('http://www.w3.org/2000/svg',
 const selectedConnection: ShallowRef<null | ConnectionView> = shallowRef(null);
 const selectedNote: ShallowRef<null | NoteView> = shallowRef(null);
 const noteEditor = shallowRef(null! as ComponentInstance<typeof NoteEditor>);
+const imageSelector = shallowRef(null! as ComponentInstance<typeof ImageSelector>)
 const imageStorage = inject(imageStorageKey)!;
 const dropArea = new DropArea('image/');
 const poinerHandler = new PointerHandler({
@@ -33,6 +36,15 @@ const poinerHandler = new PointerHandler({
   onclick: unselect,
   stopPropagation: true,
 });
+
+provide(imageSelectorKey, {
+  open() {
+    imageSelector.value.open();
+  },
+  select() {
+    return imageSelector.value.select();
+  },
+})
 
 if (typeof boardId !== 'string') {
   router.push({ name: 'my-boards' });
@@ -264,6 +276,7 @@ onBeforeUnmount(() => {
 
   <ConnectionEditor :connection="selectedConnection"></ConnectionEditor>
   <NoteEditor ref="noteEditor" :note="selectedNote"></NoteEditor>
+  <ImageSelector ref="imageSelector" />
 </template>
 
 <style scoped>

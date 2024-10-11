@@ -52,11 +52,16 @@ export class DropArea {
     target.addEventListener('drop', this);
   }
 
+  public isAttached() {
+    return this.target != null;
+  }
+
   public detach() {
     this.target.removeEventListener('dragenter', this);
     this.target.removeEventListener('dragover', this);
     this.target.removeEventListener('dragleave', this);
     this.target.removeEventListener('drop', this);
+    this.target = null!;
   }
 
   public handleEvent(e: Event) {

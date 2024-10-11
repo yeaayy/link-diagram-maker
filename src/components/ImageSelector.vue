@@ -1,38 +1,47 @@
 <script setup lang="ts">
 import { imageStorageKey } from '@/ImageStorage';
-import type { StoredImage } from '@/model/StoredImage';
+import { StoredImage } from '@/model/StoredImage';
+import { DropArea } from '@/utils/DropArea';
 import keyboard from '@/utils/keyboard';
-import { faPencil, faX } from '@fortawesome/free-solid-svg-icons';
+import { faUpload, faX } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { computed, inject, onBeforeMount, onMounted, shallowRef } from 'vue';
+import { inject, onBeforeMount, onMounted, shallowRef, watch } from 'vue';
 import ImageSelectorItem from './ImageSelectorItem.vue';
 
-const prop = withDefaults(defineProps<{
-  img?: StoredImage | null;
-}>(), {
-  img: null,
+const root = shallowRef<null | HTMLElement>(null);
+const imageStorage = inject(imageStorageKey)!;
+const selecting = shallowRef(false);
+const show = shallowRef(false);
+const list = imageStorage.getAllRef();
+const dropArea = new DropArea('image/');
+let pendingResolve: null | ((img: StoredImage | null) => void)
+let pendingReject: null | ((reason: any) => void);
+
+dropArea.dropped.listen(img => {
+  imageStorage.upload(img);
 });
 
-const emit = defineEmits<{
-  selected: [img: StoredImage | null];
-}>();
-
-const imageStorage = inject(imageStorageKey)!;
-const selected = computed(() => prop.img);
-const selecting = shallowRef(false);
-const list = imageStorage.getAllRef();
+watch(root, root => {
+  if (root) dropArea.attach(root);
+  else dropArea.detach();
+})
 
 function onItemClick(img: StoredImage | null) {
-  selecting.value = false;
-  emit('selected', img);
-}
-
-function onSelecting() {
-  selecting.value = true;
+  if (selecting.value && pendingResolve && pendingReject) {
+    show.value = false;
+    pendingResolve!(img);
+    pendingResolve = null;
+    pendingReject = null;
+  }
 }
 
 function cancelSelecting() {
-  selecting.value = false;
+  show.value = false;
+  if (selecting.value && pendingResolve && pendingReject) {
+    pendingReject!('canceled');
+    pendingResolve = null;
+    pendingReject = null;
+  }
 }
 
 function deleteImage(img: StoredImage) {
@@ -49,36 +58,33 @@ onBeforeMount(() => {
 
 defineExpose({
   open() {
+    selecting.value = false;
+    show.value = true;
+  },
+  select() {
     selecting.value = true;
+    show.value = true;
+    return new Promise<StoredImage | null>((resolve, reject) => {
+      pendingReject = reject;
+      pendingResolve = resolve;
+    });
   }
 })
 </script>
 
 <template>
-  <template v-if="selected">
-    <div v-bind="$attrs" class="img">
-      <img :src="selected.fullPath" />
-      <div class="overlay" @click="onSelecting">
-        <button class="select">
-          <FontAwesomeIcon :icon="faPencil" />
-          Change Image
-        </button>
-      </div>
-    </div>
-  </template>
-  <button v-else v-bind="$attrs" class="select row" @click="onSelecting">
-    <FontAwesomeIcon :icon="faPencil" />
-    Select Image
-  </button>
-
-  <Teleport to="body">
-    <div v-if="selecting" class="image-selector">
+  <Teleport v-if="show" to="body">
+    <div ref="root" :class="{
+      'image-selector': true,
+      selecting,
+    }">
       <div class="title">
-        Select An Image
+        {{ selecting ? 'Select An Image' : 'All Image' }}
         <FontAwesomeIcon class="close" @click="cancelSelecting" :icon="faX" />
       </div>
+
       <div class="list">
-        <div class="item empty" @click="onItemClick(null)">
+        <div v-if="selecting" class="item empty" @click="onItemClick(null)">
           <div>
             <FontAwesomeIcon class="icon" :icon="faX" />
             Remove Image
@@ -86,19 +92,19 @@ defineExpose({
         </div>
 
         <ImageSelectorItem v-for="img of list" class="item" :img="img" @click="onItemClick(img)" @delete="deleteImage" />
+
+        <div class="overlay">
+          <div>
+            <FontAwesomeIcon :icon="faUpload" />
+            Upload Image
+          </div>
+        </div>
       </div>
     </div>
   </Teleport>
 </template>
 
 <style scoped>
-.select {
-  text-align: center;
-  padding: 0.5rem;
-  box-shadow: none;
-  width: 100%;
-}
-
 .image-selector {
   position: absolute;
   z-index: 10;
@@ -146,10 +152,10 @@ defineExpose({
   width: 20%;
   aspect-ratio: 1;
   padding: 0.25rem;
+}
 
-  &:hover:not(:has(.menu:hover)) {
-    background-color: lightblue;
-  }
+.image-selector.selecting .item:hover:not(:has(.menu:hover)) {
+  background-color: lightblue;
 }
 
 .item.empty {
@@ -164,19 +170,6 @@ defineExpose({
   }
 }
 
-img {
-  max-width: 100%;
-  max-height: 100%;
-  width: max-content;
-  height: max-content;
-  display: block;
-  margin: auto;
-}
-
-.img {
-  position: relative;
-}
-
 .overlay {
   position: absolute;
   left: 0px;
@@ -188,14 +181,18 @@ img {
   align-items: center;
   background-color: #00000088;
   opacity: 0;
+  pointer-events: none;
   transition: opacity 200ms linear;
+
+  &>* {
+    background-color: white;
+    padding: 1rem;
+    font-size: 2rem;
+    border-radius: 0.5rem;
+  }
 }
 
-.img:hover > .overlay {
+.image-selector.dropping > .list > .overlay {
   opacity: 1;
-}
-
-.overlay > .select {
-  width: auto;
 }
 </style>

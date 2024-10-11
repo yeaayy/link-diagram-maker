@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import { useImageSelector } from '@/ImageSelector';
 import { useHttp } from '@/http';
 import type { BoardView } from '@/model/BoardView';
 import keyboard from '@/utils/keyboard';
-import { faHome, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faHome, faImage, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { AxiosError } from 'axios';
-import { onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import ClickToEdit from './ClickToEdit.vue';
 
@@ -18,6 +19,7 @@ let interval: NodeJS.Timeout
 let pendingSave: Promise<void> | null
 const boardName = defineModel<string>('boardName', { default: '' });
 const http = useHttp();
+const imageSelector = useImageSelector();
 const isDirty = ref(false);
 const router = useRouter();
 
@@ -93,6 +95,7 @@ onBeforeUnmount(() => {
       <FontAwesomeIcon class="icon" :icon="faHome" @click="gotoMyBoards" title="Back to my boards" />
       <ClickToEdit max-length="255" :read-only="!prop.board.editable" v-model="boardName" @finish="renameBoard" />
     </div>
+
     <div v-if="editable">
       <FontAwesomeIcon :class="{
           icon: true,
@@ -100,6 +103,8 @@ onBeforeUnmount(() => {
           enable: isDirty,
         }" :icon="faSave"
         @click="onSave" title="Save" />
+
+      <FontAwesomeIcon class="icon enable" :icon="faImage" @click="imageSelector.open()" title="Open All Image" />
     </div>
   </div>
 </template>
@@ -126,8 +131,13 @@ onBeforeUnmount(() => {
 .save {
   color: grey;
 
+  &:hover {
+    background-color: initial;
+  }
+
   &.enable {
     color: #416ec5;
+
   }
 }
 
