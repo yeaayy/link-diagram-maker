@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { imageSelectorKey } from '@/ImageSelector';
 import { imageStorageKey } from '@/ImageStorage';
+import { useAlert } from '@/alert';
 import ConnectionEditor from '@/components/ConnectionEditor.vue';
 import ImageSelector from '@/components/ImageSelector.vue';
 import NoteEditor from '@/components/NoteEditor.vue';
 import Toolbar from '@/components/Toolbar.vue';
 import { useHttp } from '@/http';
+import { useLoading } from '@/loading';
 import { BoardView } from '@/model/BoardView';
 import { ConnectionView } from '@/model/ConnectionView';
 import { NoteView } from '@/model/NoteView';
@@ -13,13 +15,18 @@ import type { StoredImage } from '@/model/StoredImage';
 import { DropArea } from '@/utils/DropArea';
 import PointerHandler, { type GenericPointerEvent, type PointerMoveEvent } from '@/utils/PointerHandler';
 import keyboard, { getModifier } from '@/utils/keyboard';
-import { faUpload } from '@fortawesome/free-solid-svg-icons';
+import sleep from '@/utils/sleep';
+import { faUpload, faWarning } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { computed, inject, onBeforeUnmount, onMounted, provide, shallowRef, triggerRef, type ComponentInstance, type ShallowRef, readonly } from 'vue';
+import { AxiosError } from 'axios';
+import { computed, inject, onBeforeUnmount, onMounted, provide, shallowRef, triggerRef, type ComponentInstance, type ShallowRef } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 let px = 0, py = 0;
+let initialized = false;
 const router = useRouter();
+const loading = useLoading();
+const alert = useAlert();
 const http = useHttp();
 const boardId = useRoute().params.id;
 const root = shallowRef(null! as HTMLDivElement);
@@ -82,7 +89,7 @@ if (import.meta.env.DEV) {
   window.board = board.value;
 }
 
-http.board.get(boardId as string).then(({ data }) => {
+function proccessData(data: any) {
   try {
     board.value.name = data.name;
     board.value.editable = data.editable;
@@ -103,10 +110,46 @@ http.board.get(boardId as string).then(({ data }) => {
     }
     triggerRef(board);
   } catch (e) {
+    alert({
+      icon: faWarning,
+      title: 'Load failed',
+      body: 'Failed to load this diagram.',
+      button: null,
+    });
     console.error('Error reading data from  the server', e)
   }
   board.value.snapshot.reset();
-});
+}
+
+async function init() {
+  if (initialized) return;
+  initialized = true;
+
+  loading();
+  while (true) {
+    try {
+      const { data } = await http.board.get(boardId as string);
+      proccessData(data);
+      loading(false);
+      break;
+    } catch(e: unknown) {
+      if (e instanceof AxiosError) {
+        if (e.status == 404) {
+          alert({
+            icon: faWarning,
+            title: 'Diagram not found',
+            body: 'Invalid url or this diagram has been deleted.',
+            button: null,
+          })
+          loading(false);
+          disableEditing();
+          break;
+        }
+      }
+      await sleep(5000);
+    }
+  }
+}
 
 function isEditable() {
   return board.value.editable;
@@ -269,6 +312,7 @@ function disableEditing() {
 }
 
 onMounted(async() => {
+  init();
   dropArea.attach(root.value);
   poinerHandler.attach(root.value, root.value.parentElement!);
   root.value.addEventListener('wheel', onWheel);

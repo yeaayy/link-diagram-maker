@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { useImageSelector } from '@/ImageSelector';
+import { useAlert } from '@/alert';
 import { useHttp } from '@/http';
 import type { BoardView } from '@/model/BoardView';
 import keyboard from '@/utils/keyboard';
-import { faHome, faImage, faSave } from '@fortawesome/free-solid-svg-icons';
+import sleep from '@/utils/sleep';
+import { faHome, faImage, faSave, faWarning } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { AxiosError } from 'axios';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
@@ -22,8 +24,10 @@ const http = useHttp();
 const imageSelector = useImageSelector();
 const isDirty = ref(false);
 const router = useRouter();
+const alert = useAlert();
 
 function renameBoard(newName: string) {
+  if (newName == prop.board.name) return;
   http.board.rename(prop.board.id, newName)
   .catch(e => {
       alert('Failed to rename');
@@ -41,13 +45,25 @@ async function doSave() {
       await http.board.update(input);
       break;
     } catch(e) {
-      console.error(e);
       if (e instanceof AxiosError) {
-        if (e.response?.status === 409) {
-          alert('Failed to save')
+        if (e.response?.status === 401) {
+          // Session expired, wait until logged in again.
+        } else if (e.response?.status === 409) {
+          // Fatal error data conflicting, abort saving.
+          alert({
+            icon: faWarning,
+            title: 'Failed to save',
+            body: 'Your unsaved work can\'t be saved due to internal error, please refresh this page to continue.',
+          });
           break;
+        } else if (e.code == AxiosError.ERR_NETWORK) {
+          // Wait until network available again.
+        } else {
+          // Unexpected error.
+          throw e;
         }
       }
+      await sleep(5000);
     }
   }
 

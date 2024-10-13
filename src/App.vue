@@ -8,14 +8,18 @@ import ConfirmDialog from './components/ConfirmDialog.vue';
 import PromptDialog from './components/PromptDialog.vue';
 import { HttpClient, httpKey } from './http';
 import { promptDialogKey, type PromptDialogData } from './prompt';
+import { alertDialogKey, type AlertDialogData } from './alert';
+import AlertDialog from './components/AlertDialog.vue';
 
 const router = useRouter();
 const isLoading = ref(false);
-const http = new HttpClient(router);
+const http = new HttpClient(router, showAlert);
 const confirmDialog = shallowRef(null! as ComponentInstance<typeof ConfirmDialog>);
 const promptDialog = shallowRef(null! as ComponentInstance<typeof PromptDialog>);
+const alertDialog = shallowRef(null! as ComponentInstance<typeof AlertDialog>);
 const confirmDialogData = shallowRef<ConfirmDialogData>({});
 const promptDialogData = shallowRef<PromptDialogData>({});
+const alertDialogData = shallowRef<AlertDialogData>({});
 
 function setLoading(loading = true) {
   isLoading.value = loading;
@@ -47,17 +51,46 @@ function showPrompt(titleOrData: string | PromptDialogData) {
   return promptDialog.value.show();
 }
 
+function showAlert(bodyOrData: string | AlertDialogData) {
+  if (typeof bodyOrData === 'string') {
+    alertDialogData.value = {
+      local: true,
+      body: bodyOrData,
+    }
+  } else {
+    alertDialogData.value = {
+      local: true,
+      ...bodyOrData,
+    };
+  }
+  return alertDialog.value.show();
+}
+
+router.beforeEach((to, from, next) => {
+  if (alertDialogData.value.local) {
+    alertDialog.value?.hide();
+  }
+  next();
+})
+
 provide(loadingKey, setLoading);
 provide(httpKey, http);
 provide(imageStorageKey, new ImageStorage(http));
 provide(confirmDialogKey, showConfirm);
 provide(promptDialogKey, showPrompt);
+provide(alertDialogKey, showAlert);
 </script>
 
 <template>
   <RouterView />
 
   <ConfirmDialog ref="confirmDialog" v-bind="confirmDialogData" />
+  <AlertDialog ref="alertDialog" v-bind="{
+    icon: alertDialogData.icon,
+    title: alertDialogData.title,
+    body: alertDialogData.body,
+    button: alertDialogData.button,
+  }" />
   <PromptDialog ref="promptDialog" v-bind="promptDialogData" />
 
   <div v-if="isLoading" class="container">

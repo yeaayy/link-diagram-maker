@@ -60,6 +60,7 @@ defineExpose({
   open() {
     selecting.value = false;
     show.value = true;
+    imageStorage.getAll();
   },
   select() {
     selecting.value = true;

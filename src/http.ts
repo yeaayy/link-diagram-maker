@@ -2,6 +2,8 @@ import axios, { AxiosError } from "axios";
 import { inject, type InjectionKey } from "vue";
 import type { Router } from "vue-router";
 import type { ConnectionSnapshot, NoteSnapshot } from "./snapshot/Snapshot";
+import type { AlertDialogData } from "./alert";
+import { faCircleInfo, faInfo } from "@fortawesome/free-solid-svg-icons";
 
 type DispatchAction = {
   success: boolean;
@@ -14,10 +16,11 @@ type BoardUpdateData = {
 }
 
 export class HttpClient {
-  public instance;
+  private instance;
 
   constructor(
-    public readonly router: Router,
+    private readonly router: Router,
+    private readonly alert: (bodyOrTitle: string | AlertDialogData) => Promise<void>,
   ) {
     this.instance = axios.create({
       baseURL: import.meta.env.VITE_API_BASE,
@@ -25,13 +28,21 @@ export class HttpClient {
         "Content-type": "application/json",
       },
     });
-  
+
     this.instance.interceptors.response.use(response => {
       return response;
     }, (error) => {
       if (error instanceof AxiosError) {
         if (error.status === 401) {
-          this.router.push({ name: 'login' });
+          if (this.router.currentRoute.value.name !== 'login') {
+            this.alert({
+              icon: faCircleInfo,
+              title: 'Session expired',
+              body: 'Your session has been expired, please login to continue.',
+              local: false,
+            });
+            this.router.push({ name: 'login' });
+          }
         }
       }
       return Promise.reject(error);

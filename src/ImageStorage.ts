@@ -3,6 +3,8 @@ import type { HttpClient } from "./http";
 import { StoredImage } from "./model/StoredImage";
 // @ts-ignore
 import CryptoJS from "crypto-js";
+import sleep from "./utils/sleep";
+import { AxiosError } from "axios";
 
 function sha256(file: File) {
   return new Promise<string>((resolve, reject) => {
@@ -48,6 +50,8 @@ export class ImageStorage {
     if (this.fetched) {
       return this.images.value;
     }
+    while (true) {
+      try {
         const { data } = await this.http.img.get();
         for (const item of data.result) {
           const img = this.getOrAdd(item.path);
@@ -56,7 +60,18 @@ export class ImageStorage {
           img.hash = item.hash;
         }
         triggerRef(this.images);
-    this.fetched = true;
+        this.fetched = true;
+        break
+      } catch(e: unknown) {
+        if (e instanceof AxiosError) {
+          if (e.code == AxiosError.ERR_NETWORK) {
+            await sleep(5000);
+          } else {
+            throw e;
+          }
+        }
+      }
+    }
     return this.images.value;
   }
 
@@ -69,23 +84,42 @@ export class ImageStorage {
       }
     }
 
-    const { data } = await this.http.img.upload(file);
-    const result = this.getOrAdd(data.path);
-    result.id = data.id;
-    result.name = data.name;
-    result.hash = hash;
-    return result;
+    while (true) {
+      try {
+        const { data } = await this.http.img.upload(file);
+        const result = this.getOrAdd(data.path);
+        result.id = data.id;
+        result.name = data.name;
+        result.hash = hash;
+        return result;
+      } catch (e: unknown) {
+        // Only expecting network error, so just retry.
+        await sleep(5000);
+      }
+    }
   }
 
   public async delete(img: StoredImage): Promise<boolean> {
-    const { data } = await this.http.img.delete(img.id);
-    if (data.success) {
-      this.map.delete(img.id);
-      const index = this.images.value.findIndex(i => i.id == img.id);
-      this.images.value.splice(index, 1);
-      triggerRef(this.images);
+    while (true) {
+      try {
+        const { data } = await this.http.img.delete(img.id);
+        if (data.success) {
+          this.map.delete(img.id);
+          const index = this.images.value.findIndex(i => i.id == img.id);
+          this.images.value.splice(index, 1);
+          triggerRef(this.images);
+        }
+        return data.success;
+      } catch(e: unknown) {
+        if (e instanceof AxiosError) {
+          if (e.code == AxiosError.ERR_NETWORK) {
+            await sleep(5000);
+          } else {
+            throw e;
+          }
+        }
+      }
     }
-    return data.success;
   }
 }
 

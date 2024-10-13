@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import { useAlert } from '@/alert';
 import BoardItem from '@/components/BoardItem.vue';
 import { useHttp } from '@/http';
 import { useLoading } from '@/loading';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import sleep from '@/utils/sleep';
+import { faPlus, faWarning } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { shallowRef, triggerRef } from 'vue';
+import { onMounted, shallowRef, triggerRef } from 'vue';
 import { useRouter } from 'vue-router';
 
 type BoardData = {
@@ -16,13 +18,29 @@ const loading = useLoading();
 const http = useHttp();
 const router = useRouter();
 const boards = shallowRef([] as BoardData[]);
+const alert = useAlert();
+let initialized = false;
 
-loading(true);
-http.board.getAll().then(({ data }) => {
-  if (data.success) {
-    boards.value = data.result;
-  }
-}).finally(() => loading(false));
+function init() {
+  if (initialized) return;
+  initialized = true;
+
+  loading(true);
+  http.board.getAll().then(({ data }) => {
+    if (data.success) {
+      boards.value = data.result;
+    }
+  }).catch(() => {})
+  .finally(() => loading(false));
+}
+
+function handleError(e: unknown, title: string) {
+  alert({
+      icon: faWarning,
+      title,
+      body: 'Check your connection and try again.',
+    });
+}
 
 async function createNewBoard() {
   loading();
@@ -38,7 +56,7 @@ async function createNewBoard() {
       });
     }
   } catch(e) {
-    console.log(e);
+    handleError(e, 'Failed to create');
   }
   loading(false)
 }
@@ -51,7 +69,7 @@ async function onDelete(id: string) {
       boards.value = boards.value.filter(b => b.id !== id);
     }
   } catch(e) {
-    console.log(e);
+    handleError(e, 'Failed to delete');
   }
   loading(false);
 }
@@ -68,7 +86,7 @@ async function onCopy(id: string) {
       triggerRef(boards);
     }
   } catch(e) {
-    console.log(e);
+    handleError(e, 'Failed to copy');
   }
   loading(false);
 }
@@ -86,11 +104,12 @@ async function onRename(id: string, newName: string) {
       triggerRef(boards);
     }
   } catch(e) {
-    console.log(e);
+    handleError(e, 'Failed to rename');
   }
   loading(false);
 }
 
+onMounted(init);
 </script>
 
 <template>
