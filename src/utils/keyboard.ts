@@ -15,6 +15,7 @@ class KeyboardAction {
   }
 
   private onKeyDown(e: KeyboardEvent) {
+    if (e.target !== document.body) return;
     switch (e.key) {
       case 'Control':
         this._ctrlPressed = true;
