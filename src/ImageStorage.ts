@@ -1,6 +1,22 @@
 import { shallowRef, triggerRef, type InjectionKey } from "vue";
 import type { HttpClient } from "./http";
 import { StoredImage } from "./model/StoredImage";
+// @ts-ignore
+import CryptoJS from "crypto-js";
+
+function sha256(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsArrayBuffer(file);
+    reader.onload = function() {
+      const wordArray = CryptoJS.lib.WordArray.create(reader.result);
+      resolve(CryptoJS.SHA256(wordArray).toString(CryptoJS.enc.Hex));
+    };
+    reader.onerror = function(e) {
+      reject(e);
+    }
+  });
+}
 
 export class ImageStorage {
   private images = shallowRef([] as StoredImage[]);
@@ -32,8 +48,6 @@ export class ImageStorage {
     if (this.fetched) {
       return this.images.value;
     }
-    while (true) {
-      try {
         const { data } = await this.http.img.get();
         for (const item of data.result) {
           const img = this.getOrAdd(item.path);
@@ -42,19 +56,13 @@ export class ImageStorage {
           img.hash = item.hash;
         }
         triggerRef(this.images);
-        break
-      } catch(e: unknown) {
-        console.log(e);
-      }
-    }
     this.fetched = true;
     return this.images.value;
   }
 
   public async upload(file: File): Promise<StoredImage> {
     // Check if file already uploaded.
-    const hashBuffer = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
-    const hash = Array.from(new Uint8Array(hashBuffer)).map(v => v.toString(16).padStart(2, '0')).join('');
+    const hash = await sha256(file);
     for (const img of await this.getAll()) {
       if (img.hash === hash) {
         return img;
