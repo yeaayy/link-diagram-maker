@@ -4,7 +4,7 @@ require_method_post();
 require_user();
 
 $input = validate_request([
-  'id' => [required()],
+  'id' => [required(), vis_string(), vis_hex()],
 ]);
 
 $db = use_db();

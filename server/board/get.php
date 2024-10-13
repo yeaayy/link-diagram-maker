@@ -3,7 +3,7 @@ require_once __DIR__ . '/../common/session.php';
 require_method_get();
 
 $data = validate_request([
-  'id' => [required(), vis_string()],
+  'id' => [required(), vis_string(), vis_hex()],
 ]);
 
 $db = use_db();

@@ -19,6 +19,21 @@ if (json_last_error() !== JSON_ERROR_NONE) {
   exit;
 }
 
+function invalid_format() {
+  http_response_code(409);
+  echo json_encode([
+    'error' => 'Invalid input format',
+  ]);
+  exit;
+}
+
+// Validate only.
+validate($json, [
+  'id' => [required(), vis_string(), vis_hex()],
+  'conn' => [required()],
+  'note' => [required()],
+]);
+
 $board_uuid = $json['id'];
 $db = use_db();
 $create_note = $db->prepare(
@@ -46,17 +61,17 @@ function edit_note($data) {
     'note_id' => $data['id'],
   ];
   $to_set = [];
-  if (key_exists('x', $data) && key_exists('y', $data)) {
+  if ($data['x'] !== null && $data['y'] !== null) {
     array_push($to_set, 'x = :x');
     array_push($to_set, 'y = :y');
     $input['x'] = $data['x'];
     $input['y'] = $data['y'];
   }
-  if (key_exists('text', $data)) {
+  if ($data['text'] !== null) {
     array_push($to_set, 'text = :text');
     $input['text'] = $data['text'];
   }
-  if (key_exists('img', $data)) {
+  if ($data['img'] !== null) {
     array_push($to_set, 'image_id = :image_id');
     $input['image_id'] = $data['img'] == 0 ? null : $data['img'];
   }
@@ -74,11 +89,11 @@ function edit_conn($data) {
     'pos_2' => $data['pb'],
   ];
   $to_set = [];
-  if (key_exists('color', $data)) {
+  if ($data['color'] !== null) {
     array_push($to_set, 'color = :color');
     $input['color'] = hex2bin($data['color']);
   }
-  if (key_exists('size', $data)) {
+  if ($data['size'] !== null) {
     array_push($to_set, 'size = :size');
     $input['size'] = $data['size'];
   }
@@ -109,6 +124,14 @@ try {
 
   $db->beginTransaction();
   foreach ($json['note'] as $note) {
+    $note = validate($note, [
+      'type' => [required(), vis_number()],
+      'id' => [required(), vis_number()],
+      'x' => [optional(), vis_number()],
+      'y' => [optional(), vis_number()],
+      'text' => [optional(), vis_string()],
+      'img' => [optional(), vis_number()],
+    ]);
     switch ($note['type']) {
       case TYPE_CREATE:
         $create_note->execute([
@@ -133,6 +156,18 @@ try {
   }
 
   foreach ($json['conn'] as $conn) {
+    $conn = validate($conn, [
+      'type' => [required(), vis_number()],
+      'a' => [required(), vis_number()],
+      'b' => [required(), vis_number()],
+      'pa' => [required(), vis_number()],
+      'pb' => [required(), vis_number()],
+      'color' => [optional(), vis_hex(), exact_length(6)],
+      'size' => [optional(), vis_number()],
+    ]);
+    if ($conn['a'] > $conn['b']) {
+      invalid_format();
+    }
     switch ($conn['type']) {
       case TYPE_CREATE:
         $create_conn->execute([
@@ -159,6 +194,28 @@ try {
         break;
     }
   }
+
+  // Check if there is dangling connection.
+  $check = $db->prepare(
+    'SELECT COUNT(id) AS count FROM `connections` AS c
+    WHERE (
+        NOT EXISTS (SELECT id FROM `notes` AS n WHERE c.board_id = n.board_id AND c.note_1 = n.note_id)
+      OR
+        NOT EXISTS (SELECT id FROM `notes` AS n WHERE c.board_id = n.board_id AND c.note_2 = n.note_id)
+      ) AND c.board_id = :board_id'
+  );
+  $check->execute([
+    'board_id' => $board_id,
+  ]);
+  if ($check->fetch()['count'] != 0) {
+    $db->rollBack();
+    http_response_code(409);
+    echo json_encode([
+      'error' => 'Invalid result, rejected',
+    ]);
+    exit;
+  }
+
   $db->commit();
   echo json_encode([
     'ok' => true,

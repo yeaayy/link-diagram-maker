@@ -5,7 +5,7 @@ require_user();
 
 $input = validate_request([
   'name' => [required(), vis_string()],
-  'id' => [required(), vis_string()],
+  'id' => [required(), vis_string(), vis_hex()],
 ]);
 
 $s = use_db()->prepare('UPDATE `boards` SET name = :name WHERE uid = :board_id AND owner = :user_id');
@@ -16,7 +16,6 @@ $s->execute([
 ]);
 
 if ($s->rowCount() === 0) {
-  $s->debugDumpParams();
   echo json_encode([
     'success' => false,
     'msg' => 'Board not found',
