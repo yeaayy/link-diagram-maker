@@ -109,6 +109,7 @@ export class NoteView {
     for (const conn of this.conn.values()) {
       conn.destroy();
     }
+    this.img = null;
     const i = this.board.notes.indexOf(this);
     this.board.notes.splice(i, 1);
     this.board.noteMap.delete(this.id);
@@ -136,8 +137,12 @@ export class NoteView {
   }
 
   public set img(img: StoredImage | null) {
+    if (this._img) {
+      this._img.destroyed.remove(this.onImageDestroyed, this);
+    }
     this._img = img;
     if (img) {
+      img.destroyed.listen(this.onImageDestroyed, this);
       this.viewImage.src = img.fullPath;
     } else {
       this.viewImage.removeAttribute('src')
@@ -159,6 +164,10 @@ export class NoteView {
 
     if (this.isAttached())
       this.board.snapshot.push(new SAEditNote(this, ['text']));
+  }
+
+  private onImageDestroyed(img: StoredImage) {
+    this.img = null;
   }
 
   private onPointerMove(ev: GenericPointerEvent, e: PointerMoveEvent) {

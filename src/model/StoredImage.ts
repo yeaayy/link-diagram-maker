@@ -1,5 +1,8 @@
+import TypedEventListener from "@/utils/TypedEventListener";
 
 export class StoredImage{
+  public readonly destroyed = new TypedEventListener<StoredImage>();
+
   constructor(
     public readonly path: string,
     public id?: any,
@@ -9,5 +12,9 @@ export class StoredImage{
 
   get fullPath() {
     return './img/' + this.path;
+  }
+
+  destroy() {
+    this.destroyed.emit(this);
   }
 }

@@ -31,6 +31,7 @@ export class ImageStorage {
 
   public add(path: string) {
     const result = new StoredImage(path);
+    result.destroyed.listen(this.onImageDestroyed, this)
     this.images.value.push(result);
     this.map.set(path, result);
     return result;
@@ -104,10 +105,7 @@ export class ImageStorage {
       try {
         const { data } = await this.http.img.delete(img.id);
         if (data.success) {
-          this.map.delete(img.id);
-          const index = this.images.value.findIndex(i => i.id == img.id);
-          this.images.value.splice(index, 1);
-          triggerRef(this.images);
+          img.destroy();
         }
         return data.success;
       } catch(e: unknown) {
@@ -120,6 +118,14 @@ export class ImageStorage {
         }
       }
     }
+  }
+
+  private onImageDestroyed(img: StoredImage) {
+    this.map.delete(img.path);
+    const index = this.images.value.findIndex(i => i.path == img.path);
+    this.images.value.splice(index, 1);
+    triggerRef(this.images);
+    img.destroyed.remove(this.onImageDestroyed, this);
   }
 }
 
