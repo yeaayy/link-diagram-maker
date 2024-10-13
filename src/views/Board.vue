@@ -6,6 +6,7 @@ import ConnectionEditor from '@/components/ConnectionEditor.vue';
 import ImageSelector from '@/components/ImageSelector.vue';
 import NoteEditor from '@/components/NoteEditor.vue';
 import Toolbar from '@/components/Toolbar.vue';
+import { useConfirm } from '@/confirm';
 import { useHttp } from '@/http';
 import { useLoading } from '@/loading';
 import { BoardView } from '@/model/BoardView';
@@ -27,6 +28,7 @@ let initialized = false;
 const router = useRouter();
 const loading = useLoading();
 const alert = useAlert();
+const confirm = useConfirm();
 const http = useHttp();
 const boardId = useRoute().params.id;
 const root = shallowRef(null! as HTMLDivElement);
@@ -208,7 +210,15 @@ function onPressDelete() {
     selectedConnection.value.destroy();
   }
   if (selectedNote.value) {
-    selectedNote.value.destroy();
+    confirm({
+      icon: faWarning,
+      title: 'Confirm delete',
+      body: 'Delete selected note?',
+    }).then(result => {
+      if (result) {
+        selectedNote.value?.destroy();
+      }
+    });
   }
 }
 

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import type { StoredImage } from '@/model/StoredImage';
-import { faEllipsisV, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEllipsisV, faTrash, faWarning } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { shallowRef, type ComponentInstance } from 'vue';
 import Dropdown from './Dropdown.vue';
 import DropdownItem from './DropdownItem.vue';
+import { useConfirm } from '@/confirm';
 
 const prop = defineProps<{
   img: StoredImage;
@@ -14,6 +15,7 @@ const emit = defineEmits<{
   delete: [img: StoredImage]
 }>();
 
+const confirm = useConfirm();
 const menu = shallowRef(null! as ComponentInstance<typeof Dropdown>);
 const menuButton = shallowRef<null | ComponentInstance<typeof FontAwesomeIcon>>(null)
 
@@ -21,6 +23,17 @@ function openMenu(e: Event) {
   e.preventDefault();
   e.stopPropagation();
   menu.value.toggle();
+}
+
+async function confirmDelete() {
+  const confirmed = await confirm({
+    icon: faWarning,
+    title: 'Delete this image?',
+    body: 'Note that still use this image will be replaced by no image. Continue? ',
+  })
+  if (confirmed) {
+    emit('delete', prop.img)
+  }
 }
 </script>
 
@@ -31,7 +44,7 @@ function openMenu(e: Event) {
     <FontAwesomeIcon ref="menuButton" class="menu" @click="openMenu" :icon="faEllipsisV" />
 
     <Dropdown ref="menu" :relative="menuButton?.$el">
-      <DropdownItem @click="emit('delete', img)" class="dropdown-item delete">
+      <DropdownItem @click="confirmDelete" class="dropdown-item delete">
         <FontAwesomeIcon :icon="faTrash" />
         Delete
       </DropdownItem>

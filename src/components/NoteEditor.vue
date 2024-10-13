@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { useImageSelector } from '@/ImageSelector';
 import { imageStorageKey } from '@/ImageStorage';
+import { useConfirm } from '@/confirm';
 import { NoteView } from '@/model/NoteView';
+import { faWarning } from '@fortawesome/free-solid-svg-icons';
 import { computed, inject, triggerRef } from 'vue';
 import ChangeableImage from './ChangeableImage.vue';
 import DeleteButton from './DeleteButton.vue';
@@ -11,6 +13,7 @@ const prop = defineProps<{
 }>();
 
 const note = computed(() => prop.note);
+const confirm = useConfirm();
 const imageSelector = useImageSelector();
 const imageStorage = inject(imageStorageKey)!;
 
@@ -34,7 +37,15 @@ function onDropImage(img: File) {
 }
 
 function onDelete() {
-  note.value!.destroy();
+  confirm({
+      icon: faWarning,
+      title: 'Confirm delete',
+      body: 'Delete selected note?',
+    }).then(result => {
+      if (result) {
+        note.value?.destroy();
+      }
+    });
 }
 </script>
 
