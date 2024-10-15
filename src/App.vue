@@ -4,12 +4,13 @@ import { loadingKey } from '@/loading';
 import { provide, ref, shallowRef, type ComponentInstance } from 'vue';
 import { RouterView, useRouter } from 'vue-router';
 import { ImageStorage, imageStorageKey } from './ImageStorage';
+import { alertDialogKey, type AlertDialogData } from './alert';
+import AlertDialog from './components/AlertDialog.vue';
 import ConfirmDialog from './components/ConfirmDialog.vue';
 import PromptDialog from './components/PromptDialog.vue';
 import { HttpClient, httpKey } from './http';
 import { promptDialogKey, type PromptDialogData } from './prompt';
-import { alertDialogKey, type AlertDialogData } from './alert';
-import AlertDialog from './components/AlertDialog.vue';
+import { initUserData } from './userdata';
 
 const router = useRouter();
 const isLoading = ref(false);
@@ -20,6 +21,8 @@ const alertDialog = shallowRef(null! as ComponentInstance<typeof AlertDialog>);
 const confirmDialogData = shallowRef<ConfirmDialogData>({});
 const promptDialogData = shallowRef<PromptDialogData>({});
 const alertDialogData = shallowRef<AlertDialogData>({});
+
+initUserData(http);
 
 function setLoading(loading = true) {
   isLoading.value = loading;

@@ -52,11 +52,17 @@ defineExpose({
   display: flex;
   background-color: #00000080;
   z-index: 999;
-  --modal-width: 25%;
+  --modal-width: 100%;
   --modal-bg: white;
   --modal-border: 1px solid black;
   --modal-title-size: 1.5rem;
   --modal-rounded-radius: 0.5rem;
+}
+
+@media (min-width: 576px) {
+  .backdrop {
+  --modal-width: 20rem;
+  }
 }
 
 .modal {

@@ -11,7 +11,9 @@ const props = defineProps<{
 const emits = defineEmits(['input', 'update:modelValue']);
 
 function oninput(e: Event) {
-  if(props.validate) props.validate.$touch();
+  if(props.validate) {
+    props.validate.$touch();
+  }
   emits('input', e);
   emits('update:modelValue', (e.target! as HTMLInputElement).value);
 }
@@ -24,11 +26,11 @@ function oninput(e: Event) {
     :value="modelValue"
     :type="type"
     :class="[
-      'border', 'border-gray-500', 'focus:border-blue-500', 'p-1',
       validate && validate.$error ? 'is-invalid' : undefined,
     ]"
     :name="name"
     :id="name"
+    v-bind="$attrs"
     autocomplete="off"
     :required="required"
   />

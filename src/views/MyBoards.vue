@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { useAlert } from '@/alert';
 import BoardItem from '@/components/BoardItem.vue';
+import Navbar from '@/components/Navbar.vue';
 import { useHttp } from '@/http';
 import { useLoading } from '@/loading';
 import sleep from '@/utils/sleep';
-import { faPlus, faWarning } from '@fortawesome/free-solid-svg-icons';
+import { faFileAlt, faPlus, faWarning } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { onMounted, shallowRef, triggerRef } from 'vue';
 import { useRouter } from 'vue-router';
@@ -113,8 +114,12 @@ onMounted(init);
 </script>
 
 <template>
-  <div id="my-board">
-    <h3>MY DIAGRAMS</h3>
+  <div class="app-content">
+    <Navbar />
+    <h3>
+      <FontAwesomeIcon :icon="faFileAlt" />
+      MY DIAGRAMS
+    </h3>
     <button @click="createNewBoard">
       <FontAwesomeIcon :icon="faPlus" />
       Create
@@ -127,37 +132,8 @@ onMounted(init);
 </template>
 
 <style scoped>
-#my-board {
-  padding: 0.75rem 1rem;
-  flex: 1 1 0%;
-}
-
-@media (min-width: 640px) {
-  #my-board {
-    padding-left: 2rem;
-    padding-right: 2rem;
-  }
-}
-
-@media (min-width: 768px) {
-  #my-board {
-    padding-left: 6rem;
-    padding-right: 6rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  #my-board {
-    padding-left: 12rem;
-    padding-right: 12rem;
-  }
-}
-
 h3 {
-  font-weight: bold;
-  font-size: 1.5rem;
-  line-height: 2rem;
-  margin-bottom: 0px;
+  margin-bottom: 1rem;
 }
 
 button {

@@ -2,6 +2,7 @@
 import MyInput from '@/components/MyInput.vue';
 import { useHttp } from '@/http';
 import { useLoading } from '@/loading';
+import { useUserData } from '@/userdata';
 import { useVuelidate } from '@vuelidate/core';
 import { helpers, minLength, required, sameAs } from '@vuelidate/validators';
 import { AxiosError } from 'axios';
@@ -11,6 +12,7 @@ import { RouterLink, useRouter } from 'vue-router';
 const loading = useLoading();
 const router = useRouter();
 const http = useHttp();
+const userData = useUserData();
 
 const data = reactive({
   username: '',
@@ -39,8 +41,9 @@ async function register(e: Event) {
   if (!result) return false;
   v.value.$clearExternalResults();
 
-  http.auth.register(data.username, data.password).then(({ data }) => {
-    if (data.success) {
+  http.auth.register(data.username, data.password).then(({ data: result }) => {
+    if (result.success) {
+      userData.value.username = data.username;
       router.push({ name: 'my-boards' });
     }
   }).catch(e => {
@@ -57,7 +60,14 @@ async function register(e: Event) {
     <h3>REGISTER</h3>
     <form @submit="register">
       <div class="row">
-        <MyInput type="text" name="username" label="Username" :validate="v.username" v-model="data.username" required/>
+        <MyInput
+          type="text"
+          name="username"
+          label="Username"
+          :validate="v.username"
+          v-model="data.username"
+          @input="v.$clearExternalResults()"
+          required />
       </div>
 
       <div class="row">

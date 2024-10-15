@@ -117,8 +117,39 @@ export class HttpClient {
       return this.instance.post<DispatchAction>('login.php', { username, password });
     },
 
+    logout: () => {
+      return this.instance.post<DispatchAction>('logout.php');
+    },
+
     register: (username: string, password: string) => {
       return this.instance.post<DispatchAction>('register.php', { username, password });
+    },
+
+    getUser: () => {
+      return this.instance.get<{
+        username: string | null;
+      }>('user.php');
+    },
+
+    setUsername: (username: string) => {
+      return this.instance.post<DispatchAction>('change_username.php', { username });
+    },
+
+    setPassword: (oldPassword: string, newPassword: string) => {
+      return this.instance.post<DispatchAction>('change_password.php', {
+        old_password: oldPassword,
+        new_password: newPassword,
+      });
+    },
+
+    deleteAccount: (password: string) => {
+      return this.instance.post<DispatchAction & {
+        token: string;
+      }>('delete_account.php', { password });
+    },
+
+    confirmDeleteAccount: (token: string) => {
+      return this.instance.post<DispatchAction>('confirm_delete_account.php', { token });
     },
   }
 

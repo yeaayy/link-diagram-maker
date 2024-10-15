@@ -8,7 +8,7 @@ $input = validate_request([
 ]);
 
 $db = use_db();
-$s = $db->prepare('SELECT path FROM `images` WHERE owner = :user_id and id = :image');
+$s = $db->prepare('SELECT path, ext FROM `images` WHERE owner = :user_id and id = :image');
 $s->execute([
   'user_id' => $user_id,
   'image' => $input['img'],
@@ -28,7 +28,7 @@ $s->execute([
   'image' => $input['img'],
 ]);
 
-delete_file($row['path']);
+delete_file($row['path'] . '.' . $row['ext']);
 
 echo json_encode([
   'success' => true,

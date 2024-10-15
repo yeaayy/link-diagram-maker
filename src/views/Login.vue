@@ -2,19 +2,27 @@
 import MyInput from '@/components/MyInput.vue';
 import { useHttp } from '@/http';
 import { useLoading } from '@/loading';
+import { useUserData } from '@/userdata';
 import { useVuelidate } from '@vuelidate/core';
 import { helpers, required } from '@vuelidate/validators';
 import { AxiosError } from 'axios';
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, watch, watchEffect } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 
 const loading = useLoading();
 const router = useRouter();
 
 const http = useHttp();
+const userData = useUserData();
 const data = reactive({
   username: '',
   password: '',
+});
+
+watchEffect(() => {
+  if (userData.value.username !== null) {
+    router.push({ name: 'my-boards' });
+  }
 });
 
 const extern = ref<Partial<typeof data>>({});
@@ -39,9 +47,9 @@ async function register(e: Event) {
   if (!result) return false;
   clear();
 
-  http.auth.login(data.username, data.password).then(({ data }) => {
-    if (data.success) {
-      router.push({ name: 'my-boards' });
+  http.auth.login(data.username, data.password).then(({ data: result }) => {
+    if (result.success) {
+      userData.value.username = data.username;
     }
   }).catch(e => {
     if (e instanceof AxiosError) {
