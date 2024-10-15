@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/common/session.php';
+require_once __DIR__ . '/../common/session.php';
 require_method_get();
 
 if (key_exists('user_id', $_SESSION)) {

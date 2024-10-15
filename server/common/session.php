@@ -5,8 +5,6 @@ ini_set("error_log", __DIR__ . "/error.log");
 
 session_start();
 
-$upload_dir = __DIR__ . '/../../img/';
-
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/validation.php';
 
