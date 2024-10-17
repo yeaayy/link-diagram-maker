@@ -105,7 +105,6 @@ export class NoteView {
   }
 
   public destroy() {
-    this.board.snapshot.push(new SADeleteNote(this));
     for (const conn of this.conn.values()) {
       conn.destroy();
     }
@@ -114,6 +113,7 @@ export class NoteView {
     this.board.notes.splice(i, 1);
     this.board.noteMap.delete(this.id);
     this.detach();
+    this.board.snapshot.push(new SADeleteNote(this));
   }
 
   public highlight(highlight = true) {
