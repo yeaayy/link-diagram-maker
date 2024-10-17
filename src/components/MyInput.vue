@@ -1,12 +1,14 @@
 <script setup lang="ts">
-const props = defineProps<{
-  modelValue?: string,
-  validate?: any,
-  type: string,
-  name: string,
-  label: string,
-  required?: boolean,
-}>();
+import type { InputHTMLAttributes } from 'vue';
+
+interface MyInputAttributes extends /* @vue-ignore */ InputHTMLAttributes {
+  modelValue?: string;
+  validate?: any;
+  label: string;
+  name: string;
+}
+
+const props = defineProps<MyInputAttributes>();
 
 const emits = defineEmits(['input', 'update:modelValue']);
 

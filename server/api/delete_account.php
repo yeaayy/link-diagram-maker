@@ -4,20 +4,21 @@ require_method_post();
 require_user();
 
 $input = validate_request([
-  'password' => [required(), vis_string()],
+  'email' => [required(), vis_string()],
 ]);
 
-$s = use_db()->prepare('SELECT `password` FROM `users` WHERE id = :user_id');
+$s = use_db()->prepare('SELECT `email` FROM `users` WHERE id = :user_id');
 $s->execute([
   'user_id' => $user_id,
 ]);
-$password_hash = $s->fetch()['password'];
-if (!password_verify($input['password'], $password_hash)) {
+
+$email = $s->fetch()['email'];
+if ($email !== $input['email']) {
   http_response_code(403);
   echo json_encode([
     'success' => false,
     'error' => [
-      'password' => 'Password incorrect.',
+      'email' => 'Email doesn\'t match.',
     ],
   ]);
   exit;

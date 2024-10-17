@@ -4,12 +4,15 @@ import { useConfirm } from '@/confirm';
 import { useHttp } from '@/http';
 import { useLoading } from '@/loading';
 import { useUserData } from '@/userdata';
-import { faInfoCircle, faWarning } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle, faUserSlash, faWarning } from '@fortawesome/free-solid-svg-icons';
 import useVuelidate from '@vuelidate/core';
-import { helpers, required } from '@vuelidate/validators';
+import { email, helpers, required } from '@vuelidate/validators';
 import { AxiosError } from 'axios';
 import { computed, reactive, ref } from 'vue';
 import MyInput from '../MyInput.vue';
+import Card from '../Card.vue';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import MyButton from '../MyButton.vue';
 
 const http = useHttp();
 const alert = useAlert();
@@ -18,15 +21,16 @@ const loading = useLoading();
 const userData = useUserData();
 
 const data = reactive({
-  password: '',
+  email: '',
 });
 
 const extern = ref<Partial<typeof data>>({});
 const v = useVuelidate(computed(() => {
   return {
-    password: {
-      required: helpers.withMessage('Password is required.', required),
-    },
+    email: {
+      required: helpers.withMessage('Email is required', required),
+      email: helpers.withMessage('Email is not valid', email),
+    }
   };
 }), data, { $externalResults: extern });
 
@@ -42,10 +46,10 @@ async function deleteAccount(e: Event) {
 
   loading();
   try {
-    const { data: response } = await http.auth.deleteAccount(data.password);
+    const { data: response } = await http.auth.deleteAccount(data.email);
     loading(false);
     if (!response.success) return;
-    data.password = '';
+    data.email = '';
     v.value.$reset();
 
     const result = await confirm({
@@ -77,7 +81,7 @@ async function confirmDeleteAccount(token: string) {
         body: 'Your account has been deleted.',
         local: false,
       });
-      userData.value.username = null;
+      userData.value = null;
       return;
     }
   } catch(e: unknown) {}
@@ -90,20 +94,28 @@ async function confirmDeleteAccount(token: string) {
 </script>
 
 <template>
-  <form @submit="deleteAccount">
-    <div class="row">
-      <MyInput
-      type="password"
-      name="password"
-      label="Your password"
-      :validate="v.password"
-      v-model="data.password"
-      @input="clearExtern"
-      required />
-    </div>
+  <Card>
+    <template #title>
+      <FontAwesomeIcon :icon="faUserSlash" />
+      DELETE ACCOUNT
+    </template>
+    <form @submit="deleteAccount">
+      <div class="row">
+        <MyInput
+        type="email"
+        name="email"
+        label="Your email"
+        :validate="v.email"
+        v-model="data.email"
+        @input="clearExtern" />
+      </div>
 
-    <div class="row">
-      <button>Delete Account</button>
-    </div>
-  </form>
+      <div class="row text-right">
+        <MyButton color="red" type="submit">
+          <FontAwesomeIcon :icon="faUserSlash" />
+          Delete Account
+        </MyButton>
+      </div>
+    </form>
+  </Card>
 </template>

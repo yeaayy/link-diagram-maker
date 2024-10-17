@@ -3,8 +3,10 @@ import MyInput from '@/components/MyInput.vue';
 import { useHttp } from '@/http';
 import { useLoading } from '@/loading';
 import { useUserData } from '@/userdata';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faGoogle } from '@fortawesome/free-brands-svg-icons';
 import { useVuelidate } from '@vuelidate/core';
-import { helpers, required } from '@vuelidate/validators';
+import { email, helpers, required } from '@vuelidate/validators';
 import { AxiosError } from 'axios';
 import { computed, reactive, ref, watch, watchEffect } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
@@ -15,12 +17,12 @@ const router = useRouter();
 const http = useHttp();
 const userData = useUserData();
 const data = reactive({
-  username: '',
+  email: '',
   password: '',
 });
 
 watchEffect(() => {
-  if (userData.value.username !== null) {
+  if (userData.value !== null) {
     router.push({ name: 'my-boards' });
   }
 });
@@ -28,8 +30,9 @@ watchEffect(() => {
 const extern = ref<Partial<typeof data>>({});
 const v = useVuelidate(computed(() => {
   return {
-    username: {
+    email: {
       required: helpers.withMessage('Username can\'t be empty', required),
+      email,
     },
     password: {
       required: helpers.withMessage('Password can\'t be empty', required),
@@ -41,15 +44,18 @@ function clear() {
   v.value.$clearExternalResults();
 }
 
-async function register(e: Event) {
+async function login(e: Event) {
   e.preventDefault();
   const result = await v.value.$validate();
   if (!result) return false;
   clear();
 
-  http.auth.login(data.username, data.password).then(({ data: result }) => {
+  http.auth.login(data.email, data.password).then(({ data: result }) => {
     if (result.success) {
-      userData.value.username = data.username;
+      userData.value = {
+        email: data.email,
+        name: result.name,
+      };
     }
   }).catch(e => {
     if (e instanceof AxiosError) {
@@ -60,25 +66,38 @@ async function register(e: Event) {
   }).finally(() => loading(false));
   return false;
 }
+
+function loginWithGoogle() {
+  location.href = './oauth/google.php';
+}
 </script>
 
 <template>
   <div class="login">
     <h3>LOGIN</h3>
-    <form @submit="register">
+    <form @submit="login">
       <div class="row">
-        <MyInput type="text" name="username" label="Username" :validate="v.username" v-model="data.username" @input="clear" required/>
+        <MyInput type="email" name="email" label="Email" :validate="v.email" v-model="data.email" @input="clear" required/>
       </div>
 
       <div class="row">
         <MyInput type="password" name="password" label="Password" :validate="v.password" v-model="data.password" @input="clear" required />
       </div>
 
-      <div class="row">
-        Don't have account? <RouterLink :to="{ name: 'register' }" class="text-blue-400 underline">Register</RouterLink>
+      <button type="submit" class="row">Login</button>
+
+      <div class="or">
+        <div class="line"></div>
+        <div class="text">or</div>
+        <div class="line"></div>
       </div>
 
-      <button type="submit" class="row">Login</button>
+      <div class="row">
+        <div class="w-google" @click="loginWithGoogle()">
+          <FontAwesomeIcon :icon="faGoogle" />
+          Login with Google
+        </div>
+      </div>
     </form>
   </div>
 </template>
@@ -107,6 +126,41 @@ button {
 
   &:hover {
     background-color: #10b981;
+  }
+}
+
+.or {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 0.5rem;
+  &>.text {
+    margin-left: 0.25rem;
+    margin-right: 0.25rem;
+  }
+  &>.line {
+    height: 1px;
+    flex-grow: 1;
+    background-color: #888;
+  }
+}
+
+.w-google {
+  background-color: #db4a39;
+  color: white;
+  padding: 0.5rem 0px;
+  border-radius: 0.25rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #e47f74;
+  }
+
+  &>svg {
+    padding: 0.5rem;
   }
 }
 </style>

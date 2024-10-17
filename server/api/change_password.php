@@ -13,7 +13,10 @@ $s->execute([
   'user_id' => $user_id,
 ]);
 $old_password_hash = $s->fetch()['password'];
-if (!password_verify($input['old_password'], $old_password_hash)) {
+if ($old_password_hash !== null
+  && $input['old_password'] == ''
+  && !password_verify($input['old_password'], $old_password_hash))
+{
   http_response_code(403);
   echo json_encode([
     'success' => false,

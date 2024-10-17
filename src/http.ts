@@ -113,8 +113,10 @@ export class HttpClient {
   }
 
   readonly auth = {
-    login: (username: string, password: string) => {
-      return this.instance.post<DispatchAction>('login.php', { username, password });
+    login: (email: string, password: string) => {
+      return this.instance.post<DispatchAction & {
+        name: string;
+      }>('login.php', { email, password });
     },
 
     logout: () => {
@@ -127,12 +129,14 @@ export class HttpClient {
 
     getUser: () => {
       return this.instance.get<{
-        username: string | null;
+        user: null | {
+          name: string;
+        }
       }>('user.php');
     },
 
-    setUsername: (username: string) => {
-      return this.instance.post<DispatchAction>('change_username.php', { username });
+    setName: (name: string) => {
+      return this.instance.post<DispatchAction>('change_name.php', { name });
     },
 
     setPassword: (oldPassword: string, newPassword: string) => {
@@ -142,10 +146,10 @@ export class HttpClient {
       });
     },
 
-    deleteAccount: (password: string) => {
+    deleteAccount: (email: string) => {
       return this.instance.post<DispatchAction & {
         token: string;
-      }>('delete_account.php', { password });
+      }>('delete_account.php', { email });
     },
 
     confirmDeleteAccount: (token: string) => {

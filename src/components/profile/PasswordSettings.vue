@@ -2,12 +2,15 @@
 import { useAlert } from '@/alert';
 import { useHttp } from '@/http';
 import { useLoading } from '@/loading';
-import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle, faLock, faSave } from '@fortawesome/free-solid-svg-icons';
 import useVuelidate from '@vuelidate/core';
 import { helpers, minLength, required, sameAs } from '@vuelidate/validators';
 import { AxiosError } from 'axios';
 import { computed, reactive, ref } from 'vue';
 import MyInput from '../MyInput.vue';
+import Card from '../Card.vue';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import MyButton from '../MyButton.vue';
 
 const http = useHttp();
 const alert = useAlert();
@@ -22,9 +25,6 @@ const data = reactive({
 const extern = ref<Partial<typeof data>>({});
 const v = useVuelidate(computed(() => {
   return {
-    oldPassword: {
-      required: helpers.withMessage('Password is required.', required),
-    },
     newPassword: {
       required: helpers.withMessage('New password is required.', required),
       minLength: helpers.withMessage('New password must be at least 8 characters.', minLength(8)),
@@ -76,42 +76,50 @@ function clearExtern() {
 </script>
 
 <template>
-  <form @submit="changePassword">
-    <div class="row">
-      <MyInput
-        type="password"
-        name="old_password"
-        label="Old password"
-        :validate="v.oldPassword"
-        v-model="data.oldPassword"
-        @input="clearExtern"
-        required />
-    </div>
+  <Card>
+    <template #title>
+      <FontAwesomeIcon :icon="faLock" />
+      CHANGE PASSWORD
+    </template>
+    <form @submit="changePassword">
+      <div class="row">
+        <MyInput
+          type="password"
+          name="old_password"
+          label="Old password"
+          :validate="v.oldPassword"
+          v-model="data.oldPassword"
+          @input="clearExtern" />
+      </div>
 
-    <div class="row">
-      <MyInput
-        type="password"
-        name="new_password"
-        label="New password"
-        :validate="v.newPassword"
-        v-model="data.newPassword"
-        @input="clearExtern"
-        required />
-    </div>
+      <div class="row">
+        <MyInput
+          type="password"
+          name="new_password"
+          label="New password"
+          :validate="v.newPassword"
+          v-model="data.newPassword"
+          @input="clearExtern"
+          required />
+      </div>
 
-    <div class="row">
-      <MyInput
-      type="password"
-      name="confirm_new_password"
-      label="Confirm new password"
-      :validate="v.confirmNewPassword"
-      v-model="data.confirmNewPassword"
-      @input="clearExtern"
-      required />
-    </div>
+      <div class="row">
+        <MyInput
+          type="password"
+          name="confirm_new_password"
+          label="Confirm new password"
+          :validate="v.confirmNewPassword"
+          v-model="data.confirmNewPassword"
+          @input="clearExtern"
+          required />
+      </div>
 
-    <div class="row">
-      <button>Change Password</button>
-    </div>
-  </form>
+      <div class="row text-right">
+        <MyButton color="green">
+          <FontAwesomeIcon :icon="faSave" />
+          Change Password
+        </MyButton>
+      </div>
+    </form>
+  </Card>
 </template>

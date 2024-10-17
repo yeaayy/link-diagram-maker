@@ -11,7 +11,7 @@
   font-family: Arial, Helvetica, sans-serif;
   margin: 0px;
   padding: 0px;
-  overflow: hidden;
+  /* overflow: hidden; */
 }
 
 line {
@@ -70,4 +70,8 @@ h3 {
     padding-left: 12rem;
     padding-right: 12rem;
   }
+}
+
+.text-right {
+  text-align: right;
 }

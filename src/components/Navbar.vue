@@ -25,7 +25,7 @@ function openProfile() {
 }
 
 watchEffect(() => {
-  if (userData.value.username === null) {
+  if (userData.value === null) {
     router.push({ name: 'login' });
   }
 });
@@ -40,7 +40,7 @@ async function confirmLogout() {
 
   const { data } = await http.auth.logout();
   if (data.success) {
-    userData.value.username = null;
+    userData.value = null;
   }
 }
 </script>
@@ -49,7 +49,7 @@ async function confirmLogout() {
   <div class="navbar">
     <div ref="menuButton" class="menu" @click="menuDropdown.toggle()">
       <FontAwesomeIcon class="user" :icon="faUserCircle" />
-      <div>{{ userData.username }}</div>
+      <div>{{ userData?.name }}</div>
     </div>
 
     <Dropdown ref="menuDropdown" :relative="menuButton">
