@@ -74,10 +74,6 @@ async function register(e: Event) {
         <MyInput type="password" name="password" label="Password" :validate="v.password" v-model="data.password" @input="clear" required />
       </div>
 
-      <div class="row">
-        Don't have account? <RouterLink :to="{ name: 'register' }" class="text-blue-400 underline">Register</RouterLink>
-      </div>
-
       <button type="submit" class="row">Login</button>
     </form>
   </div>
