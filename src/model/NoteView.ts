@@ -140,7 +140,6 @@ export class NoteView {
     if (this._img) {
       this._img.destroyed.remove(this.onImageDestroyed, this);
     }
-    this._img = img;
     if (img) {
       img.destroyed.listen(this.onImageDestroyed, this);
       this.viewImage.src = img.fullPath;
@@ -149,8 +148,10 @@ export class NoteView {
       this.updatePosition();
     }
 
-    if (this.isAttached())
+    if (this.isAttached() && this._img !== img)
       this.board.snapshot.push(new SAEditNote(this, ['img']));
+
+    this._img = img;
   }
 
   public get img() {

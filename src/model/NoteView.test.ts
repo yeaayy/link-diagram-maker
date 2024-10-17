@@ -1,6 +1,7 @@
 import { ImageStorage } from "@/ImageStorage";
 import { expect, test } from "vitest";
 import { BoardView } from "./BoardView";
+import { SnapshotType } from "@/snapshot/Snapshot";
 
 test('Destroying StoredImage make NoteView.img set to null', () => {
   const board = new BoardView('');
@@ -13,6 +14,23 @@ test('Destroying StoredImage make NoteView.img set to null', () => {
 
   expect(note.img).null;
 });
+
+test('Delete empty note', () => {
+  const board = new BoardView('');
+  const snapshot = board.snapshot;
+  const noteContainer = document.createElement('div');
+
+  const note = board.newNote(1, 0, 0, '');
+  note.attach(noteContainer);
+  snapshot.reset();
+
+  note.destroy();
+
+  const noteSnapshot = snapshot.notes.get(snapshot.getNoteKey(note))
+  expect(noteSnapshot).exist;
+
+  expect(noteSnapshot!.type).toBe(SnapshotType.delete);
+})
 
 test('Replacing NoteView.img then destroy old image should not effecting NoteView', () => {
   const board = new BoardView('');
