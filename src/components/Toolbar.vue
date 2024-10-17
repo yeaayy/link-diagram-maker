@@ -27,7 +27,7 @@ const router = useRouter();
 const alert = useAlert();
 
 function renameBoard(newName: string) {
-  if (newName == prop.board.name) return;
+  if (newName == boardName.value) return;
   http.board.rename(prop.board.id, newName)
   .catch(e => {
       alert('Failed to rename');
