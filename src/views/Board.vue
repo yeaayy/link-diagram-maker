@@ -84,8 +84,6 @@ const boardName = computed<string>({
   }
 })
 
-dropArea.dropped.listen(onFileDropped);
-
 if (import.meta.env.DEV) {
   // @ts-ignore
   window.board = board.value;
@@ -222,6 +220,15 @@ function onPressDelete() {
   }
 }
 
+function onForceDelete() {
+  if (selectedConnection.value) {
+    selectedConnection.value.destroy();
+  }
+  if (selectedNote.value) {
+    selectedNote.value.destroy();
+  }
+}
+
 function unselect() {
   if (selectedConnection.value) {
     selectedConnection.value.highlight(false);
@@ -316,23 +323,30 @@ function disableEditing() {
   dropArea.dropped.remove(onFileDropped);
   dropArea.detach();
   keyboard.removeShortcut('delete', onPressDelete);
+  keyboard.removeShortcut('shift+delete', onForceDelete);
   keyboard.removeShortcut('alt+n', createNewNote);
   keyboard.removeShortcut('ctrl+shift+n', createNewNote);
   keyboard.removeShortcut('alt+i', createNewImageNote);
 }
 
+function enableEditing() {
+  dropArea.dropped.listen(onFileDropped);
+  dropArea.attach(root.value);
+  keyboard.addShortcut('delete', onPressDelete);
+  keyboard.addShortcut('shift+delete', onForceDelete);
+  keyboard.addShortcut('alt+n', createNewNote);
+  keyboard.addShortcut('ctrl+shift+n', createNewNote);
+  keyboard.addShortcut('alt+i', createNewImageNote);
+}
+
 onMounted(async() => {
   init();
-  dropArea.attach(root.value);
   poinerHandler.attach(root.value, root.value.parentElement!);
   root.value.addEventListener('wheel', onWheel);
   onWindowResize();
   window.addEventListener('resize', onWindowResize);
-  keyboard.addShortcut('delete', onPressDelete);
-  keyboard.addShortcut('alt+n', createNewNote);
-  keyboard.addShortcut('ctrl+shift+n', createNewNote);
-  keyboard.addShortcut('alt+i', createNewImageNote);
   keyboard.addShortcut('home', resetView);
+  enableEditing();
 
   svg.value.appendChild(previewConnection);
   previewConnection.classList.add('preview-connection');
