@@ -32,6 +32,25 @@ test('Delete empty note', () => {
   expect(noteSnapshot!.type).toBe(SnapshotType.delete);
 })
 
+test('Delete note with image', () => {
+  const board = new BoardView('');
+  const imageStorage = new ImageStorage(null!);
+  const img = imageStorage.add('img')
+  const snapshot = board.snapshot;
+  const noteContainer = document.createElement('div');
+
+  const note = board.newNote(1, 0, 0, '', img);
+  note.attach(noteContainer);
+  snapshot.reset();
+
+  note.destroy();
+
+  const noteSnapshot = snapshot.notes.get(snapshot.getNoteKey(note))
+  expect(noteSnapshot).exist;
+
+  expect(noteSnapshot!.type).toBe(SnapshotType.delete);
+})
+
 test('Replacing NoteView.img then destroy old image should not effecting NoteView', () => {
   const board = new BoardView('');
   const imageStorage = new ImageStorage(null!);
