@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { type IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { shallowRef, type ComponentInstance } from 'vue';
+import { shallowRef, type ComponentInstance, watchEffect } from 'vue';
 import ModalDialog from './ModalDialog.vue';
 
 const prop = withDefaults(defineProps<{
@@ -18,7 +18,14 @@ const prop = withDefaults(defineProps<{
 });
 
 const modalDialog = shallowRef<ComponentInstance<typeof ModalDialog> | null>(null);
+const positiveButton = shallowRef<null | HTMLButtonElement>(null);
 let pendingResolve: null | ((result: boolean) => void) = null;
+
+watchEffect(() => {
+  if (positiveButton.value) {
+    positiveButton.value.focus();
+  }
+})
 
 function resolvePositive() {
   modalDialog.value!.hide();
@@ -27,6 +34,7 @@ function resolvePositive() {
 }
 
 function resolveNegative() {
+  if (!pendingResolve) return;
   modalDialog.value!.hide();
   pendingResolve!(false);
   pendingResolve = null;
@@ -50,7 +58,7 @@ defineExpose({
 </script>
 
 <template>
-  <ModalDialog ref="modalDialog">
+  <ModalDialog ref="modalDialog" @close="resolveNegative">
     {{ body }}
 
     <template #title>
@@ -58,28 +66,31 @@ defineExpose({
       {{ title }}
     </template>
     <template #footer>
-      <div class="negative" @click="resolveNegative">
+      <button class="negative" @click="resolveNegative">
         <slot name="negative">
           {{ negativeName }}
         </slot>
-      </div>
-      <div class="positive" @click="resolvePositive">
+      </button>
+      <button ref="positiveButton" class="positive" @click="resolvePositive">
         <slot name="positive">
           {{ positiveName }}
         </slot>
-      </div>
+      </button>
     </template>
   </ModalDialog>
 </template>
 
 <style scoped>
+button {
+  background-color: white;
+  border: none;
+}
+
 .negative:hover {
   background-color: rgb(226, 152, 152);
-  cursor: pointer;
 }
 
 .positive:hover {
   background-color: rgb(152, 178, 226);
-  cursor: pointer;
 }
 </style>

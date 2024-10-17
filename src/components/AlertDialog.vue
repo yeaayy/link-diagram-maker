@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { type IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { shallowRef, type ComponentInstance } from 'vue';
+import { shallowRef, type ComponentInstance, watchEffect } from 'vue';
 import ModalDialog from './ModalDialog.vue';
 
 const prop = withDefaults(defineProps<{
@@ -16,7 +16,14 @@ const prop = withDefaults(defineProps<{
 });
 
 const modalDialog = shallowRef<ComponentInstance<typeof ModalDialog> | null>(null);
+const okButton = shallowRef<null | HTMLButtonElement>(null);
 let pendingResolve: null | (() => void) = null;
+
+watchEffect(() => {
+  if (okButton.value) {
+    okButton.value.focus();
+  }
+})
 
 function resolve() {
   if (!pendingResolve) return;
@@ -44,7 +51,7 @@ defineExpose({
 </script>
 
 <template>
-  <ModalDialog ref="modalDialog">
+  <ModalDialog ref="modalDialog" @close="resolve()">
     {{ body }}
 
     <template #title>
@@ -52,19 +59,23 @@ defineExpose({
       {{ title }}
     </template>
     <template #footer>
-      <div class="button" @click="resolve" v-if="button">
+      <button ref="okButton" class="button" @click="resolve" v-if="button">
         <slot name="button">
           {{ button }}
         </slot>
-      </div>
+      </button>
     </template>
   </ModalDialog>
 </template>
 
 <style scoped>
-.button:hover {
-  background-color: rgb(208, 208, 208);
-  cursor: pointer;
+.button {
+  border: none;
+  background-color: white;
+
+  &:hover {
+    background-color: rgb(208, 208, 208);
+  }
 }
 
 </style>

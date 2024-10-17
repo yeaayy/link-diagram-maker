@@ -7,7 +7,18 @@ const prop = withDefaults(defineProps<{
   show: false,
 });
 
+const emit = defineEmits<{
+  close: [],
+}>()
 const show = ref(prop.show);
+
+function onKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    e.stopPropagation();
+    emit('close');
+  }
+}
 
 defineExpose({
   show() {
@@ -25,7 +36,7 @@ defineExpose({
 <template>
   <Teleport to="body">
     <Transition>
-      <div class="backdrop" v-if="show">
+      <div class="backdrop" v-if="show" @keydown="onKeydown">
         <div class="modal">
           <div class="title">
             <slot name="title"></slot>
