@@ -271,6 +271,19 @@ function createNewImageNote() {
     .catch(() => {});
 }
 
+function createNewNoteAtCenter(img: StoredImage | null = null) {
+  unselect();
+  const b = board.value
+  selectedNote.value = b.createNote(b.width / 2 / b.scale - b.dx, b.height / 2 / b.scale - b.dy, '', img);
+  selectedNote.value.highlight();
+}
+
+function createNewImageNoteAtCenter() {
+  imageSelector.value.select()
+    .then(img => createNewNoteAtCenter(img))
+    .catch(() => {});
+}
+
 function onNoteCreated(note: NoteView) {
   note.attach(noteContainer.value);
   if (isEditable()) {
@@ -365,7 +378,13 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <Toolbar :board="board" :editable="board.editable" v-model:board-name="boardName" />
+  <Toolbar
+    :board="board"
+    :editable="board.editable"
+    @home="resetView"
+    @new-note="createNewNoteAtCenter"
+    @new-image-note="createNewImageNoteAtCenter"
+    v-model:board-name="boardName" />
 
   <div ref="root" :class="{
     content: true,

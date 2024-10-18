@@ -5,7 +5,7 @@ import { useHttp } from '@/http';
 import type { BoardView } from '@/model/BoardView';
 import keyboard from '@/utils/keyboard';
 import sleep from '@/utils/sleep';
-import { faHome, faImage, faSave, faWarning } from '@fortawesome/free-solid-svg-icons';
+import { faArrowCircleLeft, faCirclePlus, faHome, faImage, faPlusCircle, faSave, faWarning } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { AxiosError } from 'axios';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
@@ -15,6 +15,12 @@ import ClickToEdit from './ClickToEdit.vue';
 const prop = defineProps<{
   board: BoardView;
   editable: boolean;
+}>();
+
+const emit = defineEmits<{
+  home: [];
+  newNote: [];
+  newImageNote: [];
 }>();
 
 let interval: NodeJS.Timeout
@@ -108,11 +114,11 @@ onBeforeUnmount(() => {
 <template>
   <div class="toolbar">
     <div class="title">
-      <FontAwesomeIcon class="icon" :icon="faHome" @click="gotoMyBoards" title="Back to my boards" />
+      <FontAwesomeIcon class="icon" :icon="faArrowCircleLeft" @click="gotoMyBoards" title="Back to my boards" />
       <ClickToEdit max-length="255" :read-only="!prop.board.editable" v-model="boardName" @finish="renameBoard" />
     </div>
 
-    <div v-if="editable">
+    <div v-if="editable" class="tools">
       <FontAwesomeIcon :class="{
           icon: true,
           save: true,
@@ -121,6 +127,12 @@ onBeforeUnmount(() => {
         @click="onSave" title="Save (CTRL+S)" />
 
       <FontAwesomeIcon class="icon enable" :icon="faImage" @click="imageSelector.open()" title="Open All Image" />
+      <FontAwesomeIcon class="icon enable" :icon="faHome" @click="$emit('home')" title="Reset view (Home)" />
+      <FontAwesomeIcon class="icon enable" :icon="faPlusCircle" @click="$emit('newNote')" title="Add note (ALT+N)" />
+      <div class="icon enable" @click="$emit('newImageNote')" title="Add note with image (ALT+I)">
+        <FontAwesomeIcon :icon="faImage"/>
+        <FontAwesomeIcon class="subicon" :icon="faCirclePlus"/>
+      </div>
     </div>
   </div>
 </template>
@@ -136,6 +148,8 @@ onBeforeUnmount(() => {
 }
 
 .icon {
+  display: inline-block;
+  position: relative;
   font-size: 1.25rem;
   padding: 0.25rem;
 
@@ -159,5 +173,23 @@ onBeforeUnmount(() => {
 
 .title {
   display: flex;
+}
+
+.tools {
+  display: flex;
+  align-items: center;
+}
+
+.subicon {
+  position: absolute;
+  font-size: 0.65em;
+  filter: invert(1);
+  /* text-shadow: 0px 2px white; */
+  /* box-shadow: 0px ; */
+  background-color: white;
+  box-shadow: 0px 0px 2px white;
+  border-radius: 999px;
+  bottom: 0px;
+  right: 0px;
 }
 </style>
