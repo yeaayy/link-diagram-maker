@@ -8,7 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 </script>
 
 <template>
-  <div class="app-content">
+  <div class="app-content" v-title="'Profile'">
     <Navbar />
 
     <h3>

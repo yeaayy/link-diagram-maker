@@ -63,7 +63,7 @@ async function register(e: Event) {
 </script>
 
 <template>
-  <div class="login">
+  <div class="login" v-title="'Login'">
     <h3>LOGIN</h3>
     <form @submit="register">
       <div class="row">
