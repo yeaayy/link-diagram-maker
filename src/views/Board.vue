@@ -389,7 +389,7 @@ onBeforeUnmount(() => {
   <div ref="root" :class="{
     content: true,
     readonly: !board.editable,
-  }">
+  }" v-title="boardName">
     <div ref="noteContainer" class="board" :style="{
       '--shift-x': board.dx + 'px',
       '--shift-y': board.dy + 'px',

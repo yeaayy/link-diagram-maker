@@ -3,15 +3,14 @@ import './assets/main.css'
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
+import createTitleDirective from './utils/TitleDirective'
 
 const app = createApp(App)
 
-router.beforeEach(function (to, from, next) {
-  const title = to.meta.title as string;
+app.directive('title', createTitleDirective(title => {
   const appName = import.meta.env.VITE_APP_NAME;
-  document.title = title ? `${title} | ${appName}` : appName;
-  next();
-});
+  return title ? `${title} | ${appName}` : appName
+}));
 
 app.use(router)
 

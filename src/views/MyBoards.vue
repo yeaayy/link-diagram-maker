@@ -114,7 +114,7 @@ onMounted(init);
 </script>
 
 <template>
-  <div class="app-content">
+  <div class="app-content" v-title="'My Diagrams'">
     <Navbar />
     <h3>
       <FontAwesomeIcon :icon="faFileAlt" />

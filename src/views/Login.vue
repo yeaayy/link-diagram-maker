@@ -73,7 +73,7 @@ function loginWithGoogle() {
 </script>
 
 <template>
-  <div class="login">
+  <div class="login" v-title="'Login'">
     <h3>LOGIN</h3>
     <form @submit="login">
       <div class="row">

@@ -7,7 +7,7 @@ import PasswordSettings from '@/components/profile/PasswordSettings.vue';
 </script>
 
 <template>
-  <div class="app-content">
+  <div class="app-content" v-title="'Profile'">
     <Navbar />
 
     <div class="flex">
