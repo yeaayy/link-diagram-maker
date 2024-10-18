@@ -148,10 +148,13 @@ export class NoteView {
       this.updatePosition();
     }
 
-    if (this.isAttached() && this._img !== img)
-      this.board.snapshot.push(new SAEditNote(this, ['img']));
+    if (this._img !== img) {
+      this._img = img;
 
-    this._img = img;
+      if (this.isAttached()) {
+        this.board.snapshot.push(new SAEditNote(this, ['img']));
+      }
+    }
   }
 
   public get img() {

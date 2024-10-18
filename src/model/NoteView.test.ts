@@ -5,14 +5,20 @@ import { SnapshotType } from "@/snapshot/Snapshot";
 
 test('Destroying StoredImage make NoteView.img set to null', () => {
   const board = new BoardView('');
+  const snapshot = board.snapshot;
   const imageStorage = new ImageStorage(null!);
   const PATH = 'IMAGE';
   const img = imageStorage.getOrAdd(PATH);
   const note = board.newNote(1, 0, 0, '', img);
+  note.attach(document.createElement('div'))
 
   img.destroy();
 
   expect(note.img).null;
+  const noteSnapshot = snapshot.notes.get(snapshot.getNoteKey(note));
+  expect(noteSnapshot).exist;
+
+  expect(noteSnapshot!.img).toBe(0);
 });
 
 test('Delete empty note', () => {
