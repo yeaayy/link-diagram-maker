@@ -42,8 +42,8 @@ defineExpose({
   position: absolute;
   right: 0px;
   z-index: 99;
-  background-color: white;
-  box-shadow: 0px 0px 0.5rem black;
+  background-color: var(--white);
+  box-shadow: 0px 0px 0.5rem var(--black);
 
   &>* {
     text-wrap: nowrap;

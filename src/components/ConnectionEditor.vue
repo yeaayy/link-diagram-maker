@@ -41,7 +41,7 @@ function onDelete() {
     </div>
     <div class="mt-3">
       <label for="size">Size:</label>
-      <div class="flex">
+      <div id="size">
         <input ref="size" type="number" id="size" min="0" :value="connection.size" @change="onSizeChanged" />
         <FontAwesomeIcon @click="changeSize(-1)" class="minus" :icon="faMinus"/>
         <FontAwesomeIcon @click="changeSize(1)" class="plus" :icon="faPlus"/>
@@ -49,6 +49,18 @@ function onDelete() {
     </div>
   </div>
 </template>
+
+<style>
+.theme-light .connection-editor {
+  --button-bg: #e6e6e6;
+  --button-hover: lightblue;
+}
+
+.theme-dark .connection-editor {
+  --button-bg: #242424;
+  --button-hover: #33454b;
+}
+</style>
 
 <style scoped>
 .connection-editor {
@@ -58,8 +70,8 @@ function onDelete() {
   padding: 0.5rem;
   border-radius: 0.25rem;
   width: 25%;
-  border: 1px solid black;
-  background-color: white;
+  border: 1px solid var(--black);
+  background-color: var(--white);
   z-index: 2;
 }
 
@@ -68,29 +80,32 @@ input[type=number] {
   text-align: center;
 }
 
+#size {
+  display: flex;
+  align-items: center;
+}
+
 .minus {
   margin-left: 0.25rem;
-  border-right: 1px solid white;
-  background-color: #4478d8;
+  border-right: 1px solid var(--white);
   padding: 0.25rem 0.5rem;
   border-top-left-radius: 0.25rem;
   border-bottom-left-radius: 0.25rem;
-  background-color: #e6e6e6;
+  background-color: var(--button-bg);
 
   &:hover {
-    background-color: lightblue;
+    background-color: var(--button-hover);
   }
 }
 
 .plus {
-  background-color: #4478d8;
   padding: 0.25rem 0.5rem;
   border-top-right-radius: 0.25rem;
   border-bottom-right-radius: 0.25rem;
-  background-color: #e6e6e6;
+  background-color: var(--button-bg);
 
   &:hover {
-    background-color: lightblue;
+    background-color: var(--button-hover);
   }
 }
 </style>

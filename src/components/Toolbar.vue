@@ -11,6 +11,7 @@ import { AxiosError } from 'axios';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import ClickToEdit from './ClickToEdit.vue';
+import ThemeSelector from './ThemeSelector.vue';
 
 const prop = defineProps<{
   board: BoardView;
@@ -116,6 +117,9 @@ onBeforeUnmount(() => {
     <div class="title">
       <FontAwesomeIcon class="icon" :icon="faArrowCircleLeft" @click="gotoMyBoards" title="Back to my boards" />
       <ClickToEdit max-length="255" :read-only="!prop.board.editable" v-model="boardName" @finish="renameBoard" />
+      <div class="theme-selector">
+        <ThemeSelector />
+      </div>
     </div>
 
     <div v-if="editable" class="tools">
@@ -142,7 +146,7 @@ onBeforeUnmount(() => {
   position: fixed;
   padding: 0.25rem;
   z-index: 1;
-  background-color: white;
+  background-color: var(--white);
   width: 100%;
   box-shadow: 0px 0px 0.25rem gray;
 }
@@ -173,6 +177,7 @@ onBeforeUnmount(() => {
 
 .title {
   display: flex;
+  align-items: center;
 }
 
 .tools {
@@ -186,10 +191,14 @@ onBeforeUnmount(() => {
   filter: invert(1);
   /* text-shadow: 0px 2px white; */
   /* box-shadow: 0px ; */
-  background-color: white;
-  box-shadow: 0px 0px 2px white;
+  background-color: var(--white);
+  box-shadow: 0px 0px 2px var(--white);
   border-radius: 999px;
   bottom: 0px;
   right: 0px;
+}
+
+.theme-selector {
+  margin-left: auto;
 }
 </style>

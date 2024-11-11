@@ -13,6 +13,21 @@
   padding: 0px;
 }
 
+.theme-dark {
+  --white: black;
+  --black: white;
+}
+
+.theme-light {
+  --white: white;
+  --black: black;
+}
+
+body {
+  background-color: var(--white);
+  color: var(--black);
+}
+
 line {
   stroke-linecap: round;
   pointer-events: stroke;
