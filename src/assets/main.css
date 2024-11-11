@@ -14,7 +14,7 @@
 }
 
 .theme-dark {
-  --white: black;
+  --white: #222325;
   --black: white;
 }
 
