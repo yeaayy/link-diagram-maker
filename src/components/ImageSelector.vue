@@ -114,11 +114,11 @@ defineExpose({
   top: 0.5rem;
   right: 0.5rem;
   bottom: 0.5rem;
-  background: white;
+  background: var(--white);
   padding: 0.5rem;
   overflow-y: scroll;
   border-radius: 0.5rem;
-  box-shadow: 0px 0px 0.25rem black;
+  box-shadow: 0px 0px 0.25rem var(--black);
 }
 
 .title {
@@ -187,7 +187,7 @@ defineExpose({
   transition: opacity 200ms linear;
 
   &>* {
-    background-color: white;
+    background-color: var(--white);
     padding: 1rem;
     font-size: 2rem;
     border-radius: 0.5rem;

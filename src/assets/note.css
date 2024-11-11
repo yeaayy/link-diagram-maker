@@ -4,7 +4,7 @@
   position: absolute;
   left: calc(var(--shift-x) + var(--x));
   top: calc(var(--shift-y) + var(--y));
-  background-color: white;
+  background-color: var(--white);
   padding: var(--padding);
   border-style: solid;
   border-color: grey;
@@ -39,7 +39,6 @@
       width: var(--size);
       height: var(--size);
       border-radius: 50%;
-      background-color: #00000010;
       z-index: 1;
 
       &:hover {

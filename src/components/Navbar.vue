@@ -8,6 +8,7 @@ import { shallowRef, type ComponentInstance, watchEffect } from 'vue';
 import { useRouter } from 'vue-router';
 import Dropdown from './Dropdown.vue';
 import DropdownItem from './DropdownItem.vue';
+import ThemeSelector from './ThemeSelector.vue';
 
 const menuButton = shallowRef(null! as HTMLElement);
 const menuDropdown = shallowRef(null! as ComponentInstance<typeof Dropdown>);
@@ -47,6 +48,7 @@ async function confirmLogout() {
 
 <template>
   <div class="navbar">
+    <ThemeSelector />
     <div ref="menuButton" class="menu" @click="menuDropdown.toggle()">
       <FontAwesomeIcon class="user" :icon="faUserCircle" />
       <div>{{ userData?.name }}</div>
@@ -74,6 +76,7 @@ async function confirmLogout() {
 <style scoped>
 .navbar {
   display: flex;
+  justify-content: end;
 }
 
 .user {
@@ -83,7 +86,7 @@ async function confirmLogout() {
 }
 
 .menu {
-  margin-left: auto;
+  margin-left: 0.25rem;
   padding: 0.25rem;
   cursor: pointer;
   display: flex;
@@ -91,7 +94,8 @@ async function confirmLogout() {
   border-radius: 0.25rem;
 
   &:hover {
-    box-shadow: 0px 0px 0.125rem black;
+    box-shadow: 0px 0px 0.125rem var(--black);
+    background-color: #bfdbfe;
   }
 }
 </style>

@@ -71,10 +71,11 @@ defineExpose({
 <style scoped>
 .button {
   border: none;
-  background-color: white;
+  background-color: var(--white);
+  color: var(--black);
 
   &:hover {
-    background-color: rgb(208, 208, 208);
+    background-color: #808080;
   }
 }
 

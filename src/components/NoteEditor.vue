@@ -72,8 +72,8 @@ function onDelete() {
   padding: 0.5rem;
   border-radius: 0.25rem;
   width: 25%;
-  border: 1px solid black;
-  background-color: white;
+  border: 1px solid var(--black);
+  background-color: var(--white);
   z-index: 2;
   overflow-y: scroll;
 }
@@ -83,5 +83,7 @@ function onDelete() {
   height: 32rem;
   padding: 0.25rem;
   border: 1px solid #ddd;
+  background-color: var(--white);
+  color: var(--black);
 }
 </style>

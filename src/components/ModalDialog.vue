@@ -64,8 +64,8 @@ defineExpose({
   background-color: #00000080;
   z-index: 999;
   --modal-width: 100%;
-  --modal-bg: white;
-  --modal-border: 1px solid black;
+  --modal-bg: var(--white);
+  --modal-border: 1px solid var(--black);
   --modal-title-size: 1.5rem;
   --modal-rounded-radius: 0.5rem;
 }

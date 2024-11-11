@@ -82,7 +82,8 @@ defineExpose({
 
 <style scoped>
 button {
-  background-color: white;
+  background-color: var(--white);
+  color: var(--black);
   border: none;
 }
 

@@ -85,13 +85,13 @@ function open() {
 <style scoped>
 .item {
   position: relative;
-  border-top: 1px solid black;
+  border-top: 1px solid var(--black);
   padding-left: 0.5rem;
   display: flex;
   align-items: center;
 
   &:last-child {
-    border-bottom: 1px solid black;
+    border-bottom: 1px solid var(--black);
   }
 
   &:hover:not(:has(.menu:hover)) {
