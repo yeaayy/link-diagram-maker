@@ -13,6 +13,7 @@ export class BoardView {
 
   public defaultColor = 'ff0000';
   public defaultSize = 5;
+  public defaultDash: number[] = [];
   public editable = false;
   public name = 'Untitled';
 
@@ -48,7 +49,7 @@ export class BoardView {
     return this.newNote(id, x, y, text, img);
   }
 
-  public newConnection(a: number | NoteView, pa: ConnPosition, b: number | NoteView, pb: ConnPosition, color?: string, size?: number) {
+  public newConnection(a: number | NoteView, pa: ConnPosition, b: number | NoteView, pb: ConnPosition, color?: string, size?: number, dash?: number[]) {
     if (typeof a === 'number') {
       const noteA = this.noteMap.get(a);
       if (!noteA) throw new Error(`Note with id '${a}' not found`);
@@ -73,8 +74,11 @@ export class BoardView {
     if (size === undefined) {
       size = this.defaultSize;
     }
+    if (dash === undefined) {
+      dash = this.defaultDash;
+    }
 
-    const result = new ConnectionView(this, a, pa, b, pb, color, size);
+    const result = new ConnectionView(this, a, pa, b, pb, color, size, dash);
     this.connections.push(result);
     this.connectionCreated.emit(result);
     return result;

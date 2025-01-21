@@ -48,7 +48,7 @@ while ($row = $s->fetch()) {
   ]);
 }
 
-$s = $db->prepare('SELECT id, note_1, note_2, pos_1, pos_2, color, size FROM `connections` WHERE board_id = :board_id');
+$s = $db->prepare('SELECT id, note_1, note_2, pos_1, pos_2, color, size, dash FROM `connections` WHERE board_id = :board_id');
 $s->execute([
   'board_id' => $board_id,
 ]);
@@ -61,6 +61,7 @@ while ($row = $s->fetch()) {
     'pos_2' => $row['pos_2'],
     'color' => bin2hex($row['color']),
     'size' => $row['size'],
+    'dash' => $row['dash'],
   ]);
 }
 

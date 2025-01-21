@@ -30,6 +30,9 @@ export class SAEditConnection implements SnapshotAction {
         case 'size':
           stored.size = c.size;
           break;
+        case "dash":
+          stored.dash = c.dash.join(' ');
+          break;
       }
     }
   }
