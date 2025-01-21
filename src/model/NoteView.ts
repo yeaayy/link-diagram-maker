@@ -163,7 +163,12 @@ export class NoteView {
 
   public set text(text: string) {
     this._text = text;
-    this.viewContent.innerHTML = text;
+    if (text.length == 0) {
+      this.viewContent.classList.add('empty');
+    } else {
+      this.viewContent.classList.remove('empty');
+      this.viewContent.innerHTML = text;
+    }
     this.updatePosition();
 
     if (this.isAttached())
@@ -187,6 +192,9 @@ export class NoteView {
     this.dragFrom = parseInt(target.dataset['pos']!);
     document.body.classList.add('dragging-dot');
     this.board.previewConnection.emit(this.dots[this.dragFrom], px, py);
+    for (const dot of this.dots) {
+      dot.style.opacity = '0';
+    }
   }
 
   private onDraggingDot(ev: GenericPointerEvent, e: PointerMoveEvent) {
@@ -195,6 +203,9 @@ export class NoteView {
   
   private onEndDragDot(e: GenericPointerEvent, px: number, py: number) {
     document.body.classList.remove('dragging-dot');
+    for (const dot of this.dots) {
+      dot.style.removeProperty('opacity');
+    }
     const target = e.target as HTMLElement;
     if (!target.classList.contains('dot')) {
       return;

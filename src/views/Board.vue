@@ -390,15 +390,17 @@ onBeforeUnmount(() => {
     content: true,
     readonly: !board.editable,
   }" v-title="boardName">
+
+    <svg id="board-svg" ref="svg" :width="board.width" :height="board.height"
+      :viewBox="[-board.dx, -board.dy, board.width / scale, board.height / scale].join(' ')">
+    </svg>
+
     <div ref="noteContainer" class="board" :style="{
       '--shift-x': board.dx + 'px',
       '--shift-y': board.dy + 'px',
       '--scale': scale,
     }">
     </div>
-    <svg id="board-svg" ref="svg" :width="board.width" :height="board.height"
-      :viewBox="[-board.dx, -board.dy, board.width / scale, board.height / scale].join(' ')">
-    </svg>
 
     <div class="overlay">
       <div>
@@ -426,6 +428,11 @@ onBeforeUnmount(() => {
   transform-origin: top left;
   transform: scale(var(--scale));
   position: relative;
+  pointer-events: none;
+
+  & * {
+    pointer-events: initial;
+  }
 }
 
 #board-svg {

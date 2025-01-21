@@ -110,7 +110,7 @@ export default class PointerHandler {
     }
     this.lx = x;
     this.ly = y;
-    if (this.validClick && Math.hypot(ax, ay) > 10) this.validClick = false;
+    if (this.validClick && Math.hypot(ax, ay) > 1) this.validClick = false;
   }
 
   private pointerIdle(e: GenericPointerEvent, x: number, y: number) {
