@@ -24,6 +24,7 @@ export class SADeleteConnection implements SnapshotAction {
       stored.type = SnapshotType.delete;
       delete stored.color;
       delete stored.size;
+      delete stored.dash;
     }
   }
 }

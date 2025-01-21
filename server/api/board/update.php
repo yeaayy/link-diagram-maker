@@ -46,8 +46,8 @@ $delete_note = $db->prepare(
 );
 
 $create_conn = $db->prepare(
-  'INSERT INTO `connections`(`board_id`, `note_1`, `note_2`, `pos_1`, `pos_2`, `color`, `size`)
-  VALUES (:board_id, :note_1, :note_2, :pos_1, :pos_2, :color, :size)'
+  'INSERT INTO `connections`(`board_id`, `note_1`, `note_2`, `pos_1`, `pos_2`, `color`, `size`, `dash`)
+  VALUES (:board_id, :note_1, :note_2, :pos_1, :pos_2, :color, :size, :dash)'
 );
 
 $delete_conn = $db->prepare(
@@ -96,6 +96,10 @@ function edit_conn($data) {
   if ($data['size'] !== null) {
     array_push($to_set, 'size = :size');
     $input['size'] = $data['size'];
+  }
+  if ($data['dash'] !== null) {
+    array_push($to_set, 'dash = :dash');
+    $input['dash'] = $data['dash'];
   }
   $edit_conn = $db->prepare('UPDATE `connections` SET ' . join(',', $to_set)
     . ' WHERE board_id = :board_id AND note_1 = :note_1 AND note_2 = :note_2 AND pos_1 = :pos_1 AND pos_2 = :pos_2');
@@ -164,6 +168,7 @@ try {
       'pb' => [required(), vis_number()],
       'color' => [optional(), vis_hex(), exact_length(6)],
       'size' => [optional(), vis_number()],
+      'dash' => [optional(), vis_string()],
     ]);
     if ($conn['a'] > $conn['b']) {
       invalid_format();
@@ -178,6 +183,7 @@ try {
           'pos_2' => $conn['pb'],
           'color' => hex2bin($conn['color']),
           'size' => $conn['size'],
+          'dash' => $conn['dash'],
         ]);
         break;
       case TYPE_EDIT:

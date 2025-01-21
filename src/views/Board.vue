@@ -103,7 +103,15 @@ function proccessData(data: any) {
       );
     }
     for (const conn of data.conns) {
-      board.value.newConnection(parseInt(conn.note_1), parseInt(conn.pos_1), parseInt(conn.note_2), parseInt(conn.pos_2), conn.color, parseInt(conn.size));
+      board.value.newConnection(
+        parseInt(conn.note_1),
+        parseInt(conn.pos_1),
+        parseInt(conn.note_2),
+        parseInt(conn.pos_2),
+        conn.color,
+        parseInt(conn.size),
+        conn.dash == '' ? [] : conn.dash.split(' ').map((val: any) => parseFloat(val)),
+      );
     }
     if (!data.editable) {
       disableEditing();

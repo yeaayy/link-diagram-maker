@@ -1,15 +1,70 @@
 <script setup lang="ts">
-import type { ConnectionView } from '@/model/ConnectionView';
-import { faMinus, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { ConnectionView } from '@/model/ConnectionView';
+import { faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { shallowRef } from 'vue';
+import { shallowRef, watchEffect, type ComponentInstance, watch } from 'vue';
+import DashPreview from './DashPreview.vue';
 import DeleteButton from './DeleteButton.vue';
+import Dropdown from './Dropdown.vue';
+import DropdownItem from './DropdownItem.vue';
 
 const prop = defineProps<{
   connection: ConnectionView | null;
 }>();
 
 const size = shallowRef(null! as HTMLInputElement);
+const selectDashButton = shallowRef(null! as ComponentInstance<typeof DashPreview>);
+const dashDropdown = shallowRef(null! as ComponentInstance<typeof Dropdown>)
+
+const currentDash = shallowRef([] as number[]);
+const customDash = shallowRef(false as false | string);
+
+const defaultPattern = [
+  [],
+  [0, 1.5],
+  [1, 1.5],
+  [2, 1.5],
+  [2, 2.5],
+];
+
+watchEffect(() => {
+  const dash = prop.connection?.dash || [];
+  currentDash.value = dash;
+
+  let isCustomPattern = true;
+  for (const pattern of defaultPattern) {
+    if (ConnectionView.isDashEqual(dash, pattern)) {
+      isCustomPattern = false;
+      break;
+    }
+  }
+
+  if (isCustomPattern) {
+    customDash.value = dash.join(' ');
+  } else {
+    customDash.value = false;
+  }
+});
+
+watch(customDash, (dash) => {
+  if (dash === false) return;
+  dash = dash.trim();
+  let dashArray: number[];
+  if (dash.length == 0) {
+    dashArray = [];
+  } else {
+    dashArray = dash.split(' ').map(val => parseFloat(val));
+  }
+
+  currentDash.value = dashArray;
+  prop.connection!.dash = dashArray;
+})
+
+function setDash(dash: number[]) {
+  prop.connection!.dash = dash;
+  currentDash.value = dash;
+  customDash.value = false;
+}
 
 function changeSize(amount: number) {
   size.value.value = (parseInt(size.value.value) + amount).toString();
@@ -34,12 +89,30 @@ function onDelete() {
   <div v-if="connection" class="connection-editor">
     <DeleteButton @click="onDelete" />
 
-    <div class="mt-3">
+    <div class="row">
       <label for="color">Color:</label>
       <br>
       <input type="color" id="color" :value="'#' + connection.color" @change="onColorChanged" />
     </div>
-    <div class="mt-3">
+
+    <div class="row">
+      <label for="dash">Line Dash:</label>
+      <br>
+      <DashPreview ref="selectDashButton" :dash="currentDash" :width="150" cap="round" @click.stop="dashDropdown.toggle()" />
+      <Dropdown ref="dashDropdown" :relative="selectDashButton?.$el">
+        <DropdownItem v-for="pattern in defaultPattern" @click="setDash(pattern)">
+          <DashPreview :dash="pattern" :width="150" cap="round"/>
+        </DropdownItem>
+        <DropdownItem @click="customDash = currentDash.join(' ')">Custom</DropdownItem>
+      </Dropdown>
+      <div v-if="customDash !== false">
+        <label for="customDash">Custom Pattern:</label>
+        <br>
+        <input id="customDash" type="text" v-model="customDash" maxlength="10" placeholder="Dash pattern (E.g: 0 4 2 2)">
+      </div>
+    </div>
+
+    <div class="row">
       <label for="size">Size:</label>
       <div id="size">
         <input ref="size" type="number" id="size" min="0" :value="connection.size" @change="onSizeChanged" />

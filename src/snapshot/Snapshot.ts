@@ -16,6 +16,7 @@ export type ConnectionSnapshot = {
   pb: ConnPosition,
   color?: string;
   size?: number;
+  dash?: string;
 }
 
 export type NoteSnapshot = {

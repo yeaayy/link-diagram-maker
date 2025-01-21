@@ -17,6 +17,7 @@ export class ConnectionView {
   private visual;
   private _color = ''
   private _size = 0
+  private _dash: number[] = [];
 
   public readonly beforeDetached = new TypedEventListener<ConnectionView>();
   public readonly clicked = new TypedEventListener<ConnectionView>();
@@ -29,6 +30,7 @@ export class ConnectionView {
     public readonly pb: ConnPosition,
     color: string,
     size: number,
+    dash: number[],
   ) {
     this.view = document.createElementNS('http://www.w3.org/2000/svg', 'line');
     this.visual = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -38,6 +40,7 @@ export class ConnectionView {
     b.conn.set(a.id, this);
     this.color = color;
     this.size = size;
+    this.dash = dash;
     this.view.addEventListener('click', this);
     this.visual.addEventListener('click', this);
 
@@ -71,6 +74,10 @@ export class ConnectionView {
     this.detach();
   }
 
+  private updateDash() {
+    this.visual.setAttribute('stroke-dasharray', this._dash.map(val => val * this._size).join(' '));
+  }
+
   public set color(v: string) {
     this.board.defaultColor = v;
     this._color = v;
@@ -88,6 +95,7 @@ export class ConnectionView {
   public set size(v: number) {
     this.board.defaultSize = v;
     this._size = v;
+    this.updateDash();
     this.view.setAttribute('stroke-width', (v * 2).toString());
     this.visual.setAttribute('stroke-width', v.toString());
 
@@ -97,6 +105,19 @@ export class ConnectionView {
 
   public get size() {
     return this._size;
+  }
+
+  public set dash(dash: number[]) {
+    if (ConnectionView.isDashEqual(this._dash, dash)) return;
+    this._dash = dash;
+    this.updateDash();
+
+    if (this.isAttached())
+      this.board.snapshot.push(new SAEditConnection(this, ['dash']));
+  }
+
+  public get dash() {
+    return this._dash;
   }
 
   public highlight(highlight = true) {
@@ -126,5 +147,15 @@ export class ConnectionView {
     view.y1.baseVal.value = visual.y1.baseVal.value = (a.y + a.height / 2) / scl - this.board.dy;
     view.x2.baseVal.value = visual.x2.baseVal.value = (b.x + b.width / 2) / scl - this.board.dx;
     view.y2.baseVal.value = visual.y2.baseVal.value = (b.y + b.height / 2) / scl - this.board.dy;
+  }
+
+  public static isDashEqual(a: number[], b: number[]) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) {
+        return false;
+      }
+    }
+    return true;
   }
 }

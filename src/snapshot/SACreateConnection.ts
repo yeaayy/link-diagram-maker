@@ -18,6 +18,7 @@ export class SACreateConnection implements SnapshotAction {
       pb: c.pb,
       color: c.color,
       size: c.size,
+      dash: c.dash.join(' '),
     });
   }
 }
