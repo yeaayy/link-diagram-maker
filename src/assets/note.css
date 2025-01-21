@@ -22,9 +22,12 @@
 
     >img {
       width: 100%;
-      pointer-events: none;
+      pointer-events: none !important;
       display: block;
-      margin-bottom: 0.75rem;
+    }
+
+    >img[src] + .content:not(.empty) {
+      margin-top: 0.75rem;
     }
 
     >img:not([src]) {

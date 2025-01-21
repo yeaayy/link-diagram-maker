@@ -14,6 +14,7 @@ export enum ConnPosition {
 
 export class ConnectionView {
   private view;
+  private visual;
   private _color = ''
   private _size = 0
 
@@ -30,27 +31,33 @@ export class ConnectionView {
     size: number,
   ) {
     this.view = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    this.visual = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    this.view.classList.add('view');
+    this.visual.classList.add('visual');
     a.conn.set(b.id, this);
     b.conn.set(a.id, this);
     this.color = color;
     this.size = size;
     this.view.addEventListener('click', this);
+    this.visual.addEventListener('click', this);
 
     board.snapshot.push(new SACreateConnection(this));
   }
 
   public attach(dst: SVGElement) {
     dst.appendChild(this.view);
+    dst.appendChild(this.visual);
   }
 
   public detach() {
     if (!this.isAttached()) return;
     this.beforeDetached.emit(this);
-    this.view.parentElement!.removeChild(this.view);
+    this.view.parentElement?.removeChild(this.view);
+    this.visual.parentElement?.removeChild(this.visual);
   }
 
   public isAttached() {
-    return this.view.parentElement !== null;
+    return this.view.parentElement !== null || this.visual.parentElement !== null;
   }
 
   public destroy() {
@@ -68,6 +75,7 @@ export class ConnectionView {
     this.board.defaultColor = v;
     this._color = v;
     this.view.setAttribute('stroke', '#' + v);
+    this.visual.setAttribute('stroke', '#' + v);
 
     if (this.isAttached())
       this.board.snapshot.push(new SAEditConnection(this, ['color']));
@@ -80,7 +88,8 @@ export class ConnectionView {
   public set size(v: number) {
     this.board.defaultSize = v;
     this._size = v;
-    this.view.setAttribute('stroke-width', v.toString());
+    this.view.setAttribute('stroke-width', (v * 2).toString());
+    this.visual.setAttribute('stroke-width', v.toString());
 
     if (this.isAttached())
       this.board.snapshot.push(new SAEditConnection(this, ['size']));
@@ -109,12 +118,13 @@ export class ConnectionView {
       return
     }
     const view = this.view;
+    const visual = this.visual;
     const a = this.a.dots[this.pa].getBoundingClientRect();
     const b = this.b.dots[this.pb].getBoundingClientRect();
     const scl = this.board.scale;
-    view.x1.baseVal.value = (a.x + a.width / 2) / scl - this.board.dx;
-    view.y1.baseVal.value = (a.y + a.height / 2) / scl - this.board.dy;
-    view.x2.baseVal.value = (b.x + b.width / 2) / scl - this.board.dx;
-    view.y2.baseVal.value = (b.y + b.height / 2) / scl - this.board.dy;
+    view.x1.baseVal.value = visual.x1.baseVal.value = (a.x + a.width / 2) / scl - this.board.dx;
+    view.y1.baseVal.value = visual.y1.baseVal.value = (a.y + a.height / 2) / scl - this.board.dy;
+    view.x2.baseVal.value = visual.x2.baseVal.value = (b.x + b.width / 2) / scl - this.board.dx;
+    view.y2.baseVal.value = visual.y2.baseVal.value = (b.y + b.height / 2) / scl - this.board.dy;
   }
 }

@@ -29,21 +29,25 @@ body {
   color: var(--black);
 }
 
-line {
+line.visual {
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+line.view {
   stroke-linecap: round;
   pointer-events: stroke;
+  filter: invert(1);
+  opacity: 0;
 
-  &:hover {
-    filter: invert(1);
-  }
-
+  &:hover,
   &.highlight {
-    stroke-dasharray: 10 5;
+    opacity: 1;
   }
 }
 
-.content.readonly line:hover {
-  filter: none;
+.content.readonly line.view:hover {
+  opacity: 0;
 }
 
 .row {
