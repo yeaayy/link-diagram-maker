@@ -36,11 +36,15 @@ line.visual {
 line.view {
   stroke-linecap: round;
   pointer-events: stroke;
-  filter: invert(1);
   opacity: 0;
 
-  &:hover,
+  &:hover {
+    filter: invert(0.25);
+    opacity: 1;
+  }
+
   &.highlight {
+    filter: invert(0.5);
     opacity: 1;
   }
 }

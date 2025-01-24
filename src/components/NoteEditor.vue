@@ -9,7 +9,7 @@ import ChangeableImage from './ChangeableImage.vue';
 import DeleteButton from './DeleteButton.vue';
 
 const prop = defineProps<{
-  note: NoteView | null;
+  note: NoteView;
 }>();
 
 const note = computed(() => prop.note);
@@ -19,19 +19,19 @@ const imageStorage = inject(imageStorageKey)!;
 
 function onTextChange(e: Event) {
   const target = e.target as HTMLTextAreaElement;
-  note.value!.text = target.value;
+  note.value.text = target.value;
 }
 
 function onSelectImage() {
   imageSelector.select().then(img => {
-    note.value!.img = img;
+    note.value.img = img;
     triggerRef(note);
   }).catch(() => {});
 }
 
 function onDropImage(img: File) {
   imageStorage.upload(img).then(img => {
-    note.value!.img = img;
+    note.value.img = img;
     triggerRef(note);
   });
 }
@@ -50,7 +50,7 @@ function onDelete() {
 </script>
 
 <template>
-  <div v-if="note" class="note-editor">
+  <div class="note-editor">
     <DeleteButton @click="onDelete" />
 
     <ChangeableImage class="row" :img="note.img" @select="onSelectImage" @drop="onDropImage" />

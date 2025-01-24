@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { shallowRef, watchEffect } from 'vue';
+import { computed, shallowRef, watchEffect } from 'vue';
 
 const prop = withDefaults(defineProps<{
   dash: number[];
@@ -19,19 +19,13 @@ const prop = withDefaults(defineProps<{
   background: "white",
   cap: 'butt',
 });
-
-const dash = shallowRef('');
-
-watchEffect(() => {
-  dash.value = prop.dash.map(val => val * prop.strokeWidth).join(' ');
-});
 </script>
 
 <template>
   <svg :width="width" :height="height" :style="{background: background}">
     <line
       :stroke-width="strokeWidth"
-      :stroke-dasharray="dash"
+      :stroke-dasharray="dash.map(val => val * strokeWidth).join(' ')"
       :stroke-linecap="cap"
       :stroke="stroke"
       :x1="padding"

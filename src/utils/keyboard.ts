@@ -83,6 +83,10 @@ class KeyboardAction {
   public get ctrlPressed() {
     return this._ctrlPressed;
   }
+
+  public get shiftPressed() {
+    return this._shiftPressed;
+  }
 }
 
 type EventWithModifier = {
