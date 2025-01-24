@@ -391,6 +391,22 @@ function moveNote(dx: number, dy: number) {
   }
 }
 
+function moveNoteLeft() {
+  moveNote(-SENSITIVITY, 0);
+}
+
+function moveNoteRight() {
+  moveNote(SENSITIVITY, 0);
+}
+
+function moveNoteUp() {
+  moveNote(0, -SENSITIVITY);
+}
+
+function moveNoteDown() {
+  moveNote(0, SENSITIVITY);
+}
+
 function onConnectionCreated(conn: ConnectionView) {
   conn.attach(svg.value);
   conn.updateView();
@@ -431,6 +447,10 @@ function disableEditing() {
   keyboard.removeShortcut('alt+i', createNewImageNote);
   keyboard.removeShortcut('ctrl+a', selectAllNote);
   keyboard.removeShortcut('escape', unselect);
+  keyboard.removeShortcut('arrowleft', moveNoteLeft);
+  keyboard.removeShortcut('arrowright', moveNoteRight);
+  keyboard.removeShortcut('arrowup', moveNoteUp);
+  keyboard.removeShortcut('arrowdown', moveNoteDown);
 }
 
 function enableEditing() {
@@ -443,6 +463,10 @@ function enableEditing() {
   keyboard.addShortcut('alt+i', createNewImageNote);
   keyboard.addShortcut('ctrl+a', selectAllNote);
   keyboard.addShortcut('escape', unselect);
+  keyboard.addShortcut('arrowleft', moveNoteLeft);
+  keyboard.addShortcut('arrowright', moveNoteRight);
+  keyboard.addShortcut('arrowup', moveNoteUp);
+  keyboard.addShortcut('arrowdown', moveNoteDown);
 }
 
 onMounted(async() => {
