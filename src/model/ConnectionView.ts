@@ -109,6 +109,7 @@ export class ConnectionView {
 
   public set dash(dash: number[]) {
     if (ConnectionView.isDashEqual(this._dash, dash)) return;
+    this.board.defaultDash = dash;
     this._dash = dash;
     this.updateDash();
 

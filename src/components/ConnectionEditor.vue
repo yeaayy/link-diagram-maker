@@ -2,22 +2,25 @@
 import { ConnectionView } from '@/model/ConnectionView';
 import { faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { shallowRef, watchEffect, type ComponentInstance, watch } from 'vue';
+import { computed, ref, shallowRef, watch, watchEffect, type ComponentInstance, type Ref } from 'vue';
 import DashPreview from './DashPreview.vue';
 import DeleteButton from './DeleteButton.vue';
 import Dropdown from './Dropdown.vue';
 import DropdownItem from './DropdownItem.vue';
 
 const prop = defineProps<{
-  connection: ConnectionView | null;
+  connection: ConnectionView[];
+  delete: () => void;
 }>();
 
 const size = shallowRef(null! as HTMLInputElement);
 const selectDashButton = shallowRef(null! as ComponentInstance<typeof DashPreview>);
 const dashDropdown = shallowRef(null! as ComponentInstance<typeof Dropdown>)
-
-const currentDash = shallowRef([] as number[]);
 const customDash = shallowRef(false as false | string);
+
+const multiSize = ref(false);
+const multiColor = ref(false);
+const multiDash = ref(false);
 
 const defaultPattern = [
   [],
@@ -27,22 +30,64 @@ const defaultPattern = [
   [2, 2.5],
 ];
 
-watchEffect(() => {
-  const dash = prop.connection?.dash || [];
-  currentDash.value = dash;
-
-  let isCustomPattern = true;
-  for (const pattern of defaultPattern) {
-    if (ConnectionView.isDashEqual(dash, pattern)) {
-      isCustomPattern = false;
-      break;
-    }
+function set<K extends keyof ConnectionView>(name: K, value: ConnectionView[K], multiRef: Ref<boolean>) {
+  for (const c of prop.connection) {
+    c[name] = value;
   }
+  if (multiRef.value) {
+    multiRef.value = false;
+  }
+}
 
-  if (isCustomPattern) {
-    customDash.value = dash.join(' ');
-  } else {
+let currId: any = null;
+const currSize = computed({
+  get: () => prop.connection && multiSize.value ? 0 : prop.connection[0].size,
+  set: (size) => set('size', size, multiSize),
+});
+const currColor = computed({
+  get: () => prop.connection && multiColor.value ? '000000' : prop.connection[0].color,
+  set: (color) => set('color', color, multiColor),
+});
+const currDash = computed({
+  get: () => prop.connection && multiDash.value ? [] : prop.connection[0].dash,
+  set: (dash: number[]) => set('dash', dash, multiDash),
+});
+
+function getConnectionId(conn: ConnectionView) {
+  return conn.a.id * (conn.pa + 1) + conn.b.id * (conn.pb + 1) * 2;
+}
+
+watchEffect(() => {
+  const len = prop.connection.length;
+  const first = prop.connection[0];
+  let mSize = false;
+  let mColor = false;
+  let mDash = false;
+  let id = getConnectionId(first);
+  for (let i = 1; i < len; i++) {
+    const conn = prop.connection[i];
+    mSize ||= first.size != conn.size;
+    mColor ||= first.color != conn.color;
+    mDash ||= !ConnectionView.isDashEqual(first.dash, conn.dash);
+    id ^= getConnectionId(conn);
+  }
+  multiSize.value = mSize;
+  multiColor.value = mColor;
+  multiDash.value = mDash;
+
+  // If list of selected connection stay the same that mean no need to re-set custom dash.
+  if (id === currId) return;
+  currId = id;
+
+  if (mDash) {
     customDash.value = false;
+  } else {
+    const pattern = defaultPattern.find((pattern) => ConnectionView.isDashEqual(pattern, first.dash));
+    if (pattern) {
+      customDash.value = false;
+    } else {
+      customDash.value = first.dash.join(' ');
+    }
   }
 });
 
@@ -56,13 +101,11 @@ watch(customDash, (dash) => {
     dashArray = dash.split(' ').map(val => parseFloat(val));
   }
 
-  currentDash.value = dashArray;
-  prop.connection!.dash = dashArray;
+  currDash.value = dashArray;
 })
 
 function setDash(dash: number[]) {
-  prop.connection!.dash = dash;
-  currentDash.value = dash;
+  currDash.value = dash;
   customDash.value = false;
 }
 
@@ -72,16 +115,16 @@ function changeSize(amount: number) {
 }
 
 function onSizeChanged() {
-  prop.connection!.size = parseInt(size.value.value);
+  currSize.value = parseInt(size.value.value);
 }
 
 function onColorChanged(e: Event) {
   const target = e.target as HTMLInputElement;
-  prop.connection!.color = target.value.substring(1);
+  currColor.value = target.value.substring(1);
 }
 
 function onDelete() {
-  prop.connection!.destroy();
+  prop.delete();
 }
 </script>
 
@@ -91,19 +134,21 @@ function onDelete() {
 
     <div class="row">
       <label for="color">Color:</label>
+      <span v-if="multiColor"> (multiple color)</span>
       <br>
-      <input type="color" id="color" :value="'#' + connection.color" @change="onColorChanged" />
+      <input type="color" id="color" :value="'#' + currColor" @change="onColorChanged" />
     </div>
 
     <div class="row">
       <label for="dash">Line Dash:</label>
+      <span v-if="multiDash"> (multiple pattern)</span>
       <br>
-      <DashPreview ref="selectDashButton" :dash="currentDash" :width="150" cap="round" @click.stop="dashDropdown.toggle()" />
+      <DashPreview ref="selectDashButton" :dash="currDash" :width="150" cap="round" @click.stop="dashDropdown.toggle()" />
       <Dropdown ref="dashDropdown" :relative="selectDashButton?.$el">
         <DropdownItem v-for="pattern in defaultPattern" @click="setDash(pattern)">
           <DashPreview :dash="pattern" :width="150" cap="round"/>
         </DropdownItem>
-        <DropdownItem @click="customDash = currentDash.join(' ')">Custom</DropdownItem>
+        <DropdownItem @click="customDash = currDash.join(' ')">Custom</DropdownItem>
       </Dropdown>
       <div v-if="customDash !== false">
         <label for="customDash">Custom Pattern:</label>
@@ -114,8 +159,9 @@ function onDelete() {
 
     <div class="row">
       <label for="size">Size:</label>
+      <span v-if="multiSize"> (multiple size)</span>
       <div id="size">
-        <input ref="size" type="number" id="size" min="0" :value="connection.size" @change="onSizeChanged" />
+        <input ref="size" type="number" id="size" min="0" :value="currSize" @change="onSizeChanged" />
         <FontAwesomeIcon @click="changeSize(-1)" class="minus" :icon="faMinus"/>
         <FontAwesomeIcon @click="changeSize(1)" class="plus" :icon="faPlus"/>
       </div>

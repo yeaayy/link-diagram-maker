@@ -26,6 +26,8 @@ export class NoteView {
 
   public readonly beforeDetached = new TypedEventListener<NoteView>();
   public readonly clicked = new TypedEventListener<NoteView>();
+  public readonly startDrag = new TypedEventListener<NoteView>();
+  public readonly dragging = new TypedEventListener<[NoteView, dx: number, dy: number]>();
   public readonly dots: HTMLElement[] = [];
   public readonly conn = new Map<number, ConnectionView>;
 
@@ -54,6 +56,7 @@ export class NoteView {
     }
 
     this.pointerHandler = new PointerHandler({
+      onstart: this.onPointerStart,
       onmove: this.onPointerMove,
       onclick: this.onPointerClick,
       stopPropagation: true,
@@ -124,6 +127,14 @@ export class NoteView {
     }
   }
 
+  public move(dx: number, dy: number) {
+    this._x += dx;
+    this._y += dy;
+    this.updatePosition();
+
+    this.board.snapshot.push(new SAEditNote(this, ['x', 'y']));
+  }
+
   public get x() {
     return this._x;
   }
@@ -179,12 +190,12 @@ export class NoteView {
     this.img = null;
   }
 
-  private onPointerMove(ev: GenericPointerEvent, e: PointerMoveEvent) {
-    this._x += e.dx / this.board.scale;
-    this._y += e.dy / this.board.scale;
-    this.updatePosition();
+  private onPointerStart(ev: GenericPointerEvent, x: number, y: number) {
+    this.startDrag.emit(this);
+  }
 
-    this.board.snapshot.push(new SAEditNote(this, ['x', 'y']));
+  private onPointerMove(ev: GenericPointerEvent, e: PointerMoveEvent) {
+    this.dragging.emit(this, e.dx / this.board.scale, e.dy / this.board.scale);
   }
 
   private onStartDragDot(e: GenericPointerEvent, px: number, py: number) {
