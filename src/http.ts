@@ -1,9 +1,10 @@
+import { faCircleInfo } from "@fortawesome/free-solid-svg-icons";
 import axios, { AxiosError } from "axios";
 import { inject, type InjectionKey } from "vue";
 import type { Router } from "vue-router";
-import type { ConnectionSnapshot, NoteSnapshot } from "./snapshot/Snapshot";
 import type { AlertDialogData } from "./alert";
-import { faCircleInfo, faInfo } from "@fortawesome/free-solid-svg-icons";
+import type { ConnectionSnapshot, NoteSnapshot } from "./snapshot/Snapshot";
+import { useUserData } from "./userdata";
 
 type DispatchAction = {
   success: boolean;
@@ -41,6 +42,7 @@ export class HttpClient {
               body: 'Your session has been expired, please login to continue.',
               local: false,
             });
+            useUserData().value.username = null
             this.router.push({ name: 'login' });
           }
         }
