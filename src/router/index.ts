@@ -23,7 +23,7 @@ const router = createRouter({
       component: ProfileVue
     },
     {
-      path: '/b/:id',
+      path: '/:id',
       name: 'board',
       component: BoardVue
     },
