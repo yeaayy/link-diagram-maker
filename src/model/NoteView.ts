@@ -1,12 +1,10 @@
+import NoteSnapshot from "@/snapshot/NoteSnapshot";
 import PointerHandler, { type GenericPointerEvent, type PointerMoveEvent } from "@/utils/PointerHandler";
+import TypedEventListener from "@/utils/TypedEventListener";
 import type { BoardView } from "./BoardView";
 import { ConnPosition, type ConnectionView } from "./ConnectionView";
-import { div } from "./helper";
-import TypedEventListener from "@/utils/TypedEventListener";
 import type { StoredImage } from "./StoredImage";
-import { SACreateNote } from "@/snapshot/SACreateNote";
-import { SADeleteNote } from "@/snapshot/SADeleteNote";
-import { SAEditNote } from "@/snapshot/SAEditNote";
+import { div } from "./helper";
 
 function setPos(pos: ConnPosition) {
   return (el: HTMLElement) => {
@@ -78,7 +76,7 @@ export class NoteView {
     this.img = _img;
     this.viewRoot.dataset['id'] = id.toString();
 
-    board.snapshot.push(new SACreateNote(this));
+    board.snapshot.pushNoteSnapshotAction(NoteSnapshot.create(this));
   }
 
   public attach(dst: HTMLElement) {
@@ -116,7 +114,7 @@ export class NoteView {
     this.board.notes.splice(i, 1);
     this.board.noteMap.delete(this.id);
     this.detach();
-    this.board.snapshot.push(new SADeleteNote(this));
+    this.board.snapshot.pushNoteSnapshotAction(NoteSnapshot.delete(this));
   }
 
   public highlight(highlight = true) {
@@ -132,7 +130,7 @@ export class NoteView {
     this._y += dy;
     this.updatePosition();
 
-    this.board.snapshot.push(new SAEditNote(this, ['x', 'y']));
+    this.board.snapshot.pushNoteSnapshotAction(NoteSnapshot.edit(this, 'x', 'y'));
   }
 
   public get x() {
@@ -163,7 +161,7 @@ export class NoteView {
       this._img = img;
 
       if (this.isAttached()) {
-        this.board.snapshot.push(new SAEditNote(this, ['img']));
+        this.board.snapshot.pushNoteSnapshotAction(NoteSnapshot.edit(this, 'img'));
       }
     }
   }
@@ -183,7 +181,7 @@ export class NoteView {
     this.updatePosition();
 
     if (this.isAttached())
-      this.board.snapshot.push(new SAEditNote(this, ['text']));
+      this.board.snapshot.pushNoteSnapshotAction(NoteSnapshot.edit(this, 'text'));
   }
 
   private onImageDestroyed(img: StoredImage) {

@@ -1,9 +1,7 @@
+import ConnectionSnapshot from "@/snapshot/ConnectionSnapshot";
 import TypedEventListener from "@/utils/TypedEventListener";
-import type { NoteView } from "./NoteView";
 import type { BoardView } from "./BoardView";
-import { SACreateConnection } from "@/snapshot/SACreateConnection";
-import { SAEditConnection } from "@/snapshot/SAEditConnection";
-import { SADeleteConnection } from "@/snapshot/SADeleteConnection";
+import type { NoteView } from "./NoteView";
 
 export enum ConnPosition {
   left,
@@ -44,7 +42,7 @@ export class ConnectionView {
     this.view.addEventListener('click', this);
     this.visual.addEventListener('click', this);
 
-    board.snapshot.push(new SACreateConnection(this));
+    board.snapshot.pushConnectionSnapshotAction(ConnectionSnapshot.create(this));
   }
 
   public attach(dst: SVGElement) {
@@ -64,7 +62,7 @@ export class ConnectionView {
   }
 
   public destroy() {
-    this.board.snapshot.push(new SADeleteConnection(this));
+    this.board.snapshot.pushConnectionSnapshotAction(ConnectionSnapshot.delete(this));
     const index = this.board.connections.indexOf(this);
     if (index !== -1) {
       this.board.connections.splice(index, 1);
@@ -85,7 +83,7 @@ export class ConnectionView {
     this.visual.setAttribute('stroke', '#' + v);
 
     if (this.isAttached())
-      this.board.snapshot.push(new SAEditConnection(this, ['color']));
+      this.board.snapshot.pushConnectionSnapshotAction(ConnectionSnapshot.edit(this, 'color'));
   }
 
   public get color() {
@@ -100,7 +98,7 @@ export class ConnectionView {
     this.visual.setAttribute('stroke-width', v.toString());
 
     if (this.isAttached())
-      this.board.snapshot.push(new SAEditConnection(this, ['size']));
+      this.board.snapshot.pushConnectionSnapshotAction(ConnectionSnapshot.edit(this, 'size'));
   }
 
   public get size() {
@@ -114,7 +112,7 @@ export class ConnectionView {
     this.updateDash();
 
     if (this.isAttached())
-      this.board.snapshot.push(new SAEditConnection(this, ['dash']));
+      this.board.snapshot.pushConnectionSnapshotAction(ConnectionSnapshot.edit(this, 'dash'));
   }
 
   public get dash() {

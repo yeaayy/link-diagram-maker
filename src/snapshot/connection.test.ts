@@ -1,7 +1,8 @@
 import { BoardView } from '@/model/BoardView';
 import { ConnPosition } from '@/model/ConnectionView';
 import { test, expect } from 'vitest';
-import { SnapshotType } from './Snapshot';
+import { SnapshotType, type ConnectionSnapshotActionEdit } from './Snapshot';
+import ConnectionSnapshot from './ConnectionSnapshot';
 
 test('Connection create have correct side effect', () => {
   const board = new BoardView('');
@@ -61,7 +62,7 @@ test('Connection empty > create', () => {
   const conn = board.newConnection(noteA, ConnPosition.top, noteB, ConnPosition.top);
 
   // Check
-  const key = s.getConnectionKey(conn);
+  const key = s.getConnectionKey(ConnectionSnapshot.getId(conn));
   const sn = s.connections.get(key)
   expect(sn).exist;
   expect(sn!.type).eq(SnapshotType.create);
@@ -82,11 +83,11 @@ test('Connection empty > edit', () => {
   conn.color = 'ffffff';
 
   // Check
-  const key = s.getConnectionKey(conn);
-  const sn = s.connections.get(key)
+  const key = s.getConnectionKey(ConnectionSnapshot.getId(conn));
+  const sn = s.connections.get(key) as ConnectionSnapshotActionEdit;
   expect(sn).exist;
-  expect(sn!.type).eq(SnapshotType.edit);
-  expect(sn!.color).exist;
+  expect(sn.type).eq(SnapshotType.edit);
+  expect(sn.color).exist;
 })
 
 test('Connection empty > delete', () => {
@@ -101,7 +102,7 @@ test('Connection empty > delete', () => {
   conn.destroy()
 
   // Check
-  const key = s.getConnectionKey(conn);
+  const key = s.getConnectionKey(ConnectionSnapshot.getId(conn));
   const sn = s.connections.get(key)
   expect(sn).exist;
   expect(sn!.type).exist.eq(SnapshotType.delete);
@@ -134,12 +135,12 @@ test('Connection create > edit', () => {
   conn.color = 'ffffff';
 
   // Check
-  const key = s.getConnectionKey(conn);
-  const sn = s.connections.get(key)
+  const key = s.getConnectionKey(ConnectionSnapshot.getId(conn));
+  const sn = s.connections.get(key) as ConnectionSnapshotActionEdit;
   expect(sn).exist;
-  expect(sn!.type).exist.eq(SnapshotType.create);
-  expect(sn!.color).toBe('ffffff');
-  expect(sn!.size).exist
+  expect(sn.type).exist.eq(SnapshotType.create);
+  expect(sn.color).toBe('ffffff');
+  expect(sn.size).exist
 })
 
 test('Connection create > delete', () => {
@@ -156,7 +157,7 @@ test('Connection create > delete', () => {
   conn.destroy();
 
   // Check
-  const key = s.getConnectionKey(conn);
+  const key = s.getConnectionKey(ConnectionSnapshot.getId(conn));
   expect(s.connections.get(key)).undefined;
 })
 
@@ -191,12 +192,12 @@ test('Connection edit > edit', () => {
   conn.size = 10;
 
   // Check
-  const key = s.getConnectionKey(conn);
-  const sn = s.connections.get(key)
+  const key = s.getConnectionKey(ConnectionSnapshot.getId(conn));
+  const sn = s.connections.get(key) as ConnectionSnapshotActionEdit;
   expect(sn).exist;
-  expect(sn!.type).eq(SnapshotType.edit);
-  expect(sn!.color).toBe('ffffff');
-  expect(sn!.size).toBe(10);
+  expect(sn.type).eq(SnapshotType.edit);
+  expect(sn.color).toBe('ffffff');
+  expect(sn.size).toBe(10);
 })
 
 test('Connection edit > delete', () => {
@@ -214,7 +215,7 @@ test('Connection edit > delete', () => {
   conn.destroy();
 
   // Check
-  const key = s.getConnectionKey(conn);
+  const key = s.getConnectionKey(ConnectionSnapshot.getId(conn));
   const sn = s.connections.get(key)
   expect(sn).exist;
   expect(sn!.type).eq(SnapshotType.delete);
@@ -233,12 +234,12 @@ test('Connection delete > create', () => {
   const conn2 = board.newConnection(noteA, ConnPosition.top, noteB, ConnPosition.top, 'ffffff', 10);
 
   // Check
-  const key = s.getConnectionKey(conn2);
-  const sn = s.connections.get(key)
+  const key = s.getConnectionKey(ConnectionSnapshot.getId(conn2));
+  const sn = s.connections.get(key) as ConnectionSnapshotActionEdit;
   expect(sn).exist;
-  expect(sn!.type).eq(SnapshotType.edit);
-  expect(sn!.color).toBe('ffffff');
-  expect(sn!.size).toBe(10);
+  expect(sn.type).eq(SnapshotType.edit);
+  expect(sn.color).toBe('ffffff');
+  expect(sn.size).toBe(10);
 });
 
 test('Connection delete > delete', () => {
@@ -254,7 +255,7 @@ test('Connection delete > delete', () => {
   conn.destroy();
 
   // Check
-  const key = s.getConnectionKey(conn);
+  const key = s.getConnectionKey(ConnectionSnapshot.getId(conn));
   const sn = s.connections.get(key)
   expect(sn).exist;
   expect(sn!.type).eq(SnapshotType.delete);

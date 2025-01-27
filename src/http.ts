@@ -3,7 +3,7 @@ import axios, { AxiosError } from "axios";
 import { inject, type InjectionKey } from "vue";
 import type { Router } from "vue-router";
 import type { AlertDialogData } from "./alert";
-import type { ConnectionSnapshot, NoteSnapshot } from "./snapshot/Snapshot";
+import type { ConnectionSnapshotAction, NoteSnapshotAction } from "./snapshot/Snapshot";
 import { useUserData } from "./userdata";
 
 type DispatchAction = {
@@ -12,8 +12,8 @@ type DispatchAction = {
 
 type BoardUpdateData = {
   id: string;
-  note: NoteSnapshot[];
-  conn: ConnectionSnapshot[];
+  note: NoteSnapshotAction[];
+  conn: ConnectionSnapshotAction[];
 }
 
 export class HttpClient {
