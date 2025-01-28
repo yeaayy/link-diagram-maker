@@ -2,7 +2,7 @@ import { faCircleInfo } from "@fortawesome/free-solid-svg-icons";
 import axios, { AxiosError } from "axios";
 import { inject, type InjectionKey } from "vue";
 import type { Router } from "vue-router";
-import type { AlertDialogData } from "./alert";
+import type { Alert } from "./alert";
 import type { ConnectionSnapshotAction, NoteSnapshotAction } from "./snapshot/Snapshot";
 import { useUserData } from "./userdata";
 
@@ -21,7 +21,7 @@ export class HttpClient {
 
   constructor(
     private readonly router: Router,
-    private readonly alert: (bodyOrTitle: string | AlertDialogData) => Promise<void>,
+    private readonly alert: Alert,
   ) {
     this.instance = axios.create({
       baseURL: import.meta.env.VITE_API_BASE,

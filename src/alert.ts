@@ -11,6 +11,9 @@ export type AlertDialogData = {
 
 declare function show(body: string): Promise<void>;
 declare function show(dialog: AlertDialogData): Promise<void>;
+declare function show(): void;
+
+export type Alert = typeof show;
 
 export const alertDialogKey = Symbol() as InjectionKey<typeof show>;
 

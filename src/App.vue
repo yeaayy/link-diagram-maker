@@ -54,12 +54,17 @@ function showPrompt(titleOrData: string | PromptDialogData) {
   return promptDialog.value.show();
 }
 
-function showAlert(bodyOrData: string | AlertDialogData) {
-  if (typeof bodyOrData === 'string') {
+function showAlert(body: string): Promise<void>;
+function showAlert(dialog: AlertDialogData): Promise<void>;
+function showAlert(): void;
+function showAlert(bodyOrData?: string | AlertDialogData) {
+  if (bodyOrData === undefined) {
+    return alertDialog.value.hide();
+  } else if (typeof bodyOrData === 'string') {
     alertDialogData.value = {
       local: true,
       body: bodyOrData,
-    }
+    };
   } else {
     alertDialogData.value = {
       local: true,

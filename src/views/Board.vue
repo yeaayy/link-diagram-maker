@@ -8,7 +8,7 @@ import { BoardView } from '@/model/BoardView';
 import sleep from '@/utils/sleep';
 import { faWarning } from '@fortawesome/free-solid-svg-icons';
 import { AxiosError } from 'axios';
-import { inject, onMounted, shallowRef } from 'vue';
+import { inject, onBeforeUnmount, onMounted, shallowRef } from 'vue';
 import { useRoute } from 'vue-router';
 
 const loading = useLoading();
@@ -94,6 +94,8 @@ onMounted(() => {
     init(boardId);
   }
 });
+
+onBeforeUnmount(alert);
 </script>
 
 <template>
