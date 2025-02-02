@@ -16,6 +16,27 @@ type BoardUpdateData = {
   conn: ConnectionSnapshotAction[];
 }
 
+export type BoardData = {
+  name: string,
+  editable: boolean,
+  notes: {
+    id: string,
+    x: string,
+    y: string,
+    text: string,
+    img: null | {path: string, id: string},
+  }[],
+  conns: {
+    note_1: string,
+    note_2: string,
+    pos_1: string,
+    pos_2: string,
+    color: string,
+    size: string,
+    dash: string,
+  }[],
+};
+
 export class HttpClient {
   private instance;
 
@@ -79,25 +100,7 @@ export class HttpClient {
     },
 
     get: (id: string) => {
-      return this.instance.get<{
-        name: string,
-        editable: boolean,
-        notes: {
-          id: string,
-          x: string,
-          y: string,
-          text: string,
-          img: null | string,
-        }[],
-        conns: {
-          note_1: string,
-          note_2: string,
-          pos_1: string,
-          pos_2: string,
-          color: string,
-          size: string,
-        }[],
-      }>('board/get.php', {
+      return this.instance.get<BoardData>('board/get.php', {
         params: { id }
       });
     },

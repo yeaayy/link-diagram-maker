@@ -1,12 +1,11 @@
 import { ImageStorage } from "@/ImageStorage";
 import { expect, test } from "vitest";
-import { BoardView } from "./BoardView";
 
 test('ImageStorage.getOrAdd return the same object when using same key', () => {
   const imageStorage = new ImageStorage(null!);
   const PATH = 'IMAGE';
-  const img1 = imageStorage.getOrAdd(PATH);
-  const img2 = imageStorage.getOrAdd(PATH);
+  const img1 = imageStorage.getOrAdd(PATH, 1);
+  const img2 = imageStorage.getOrAdd(PATH, 2);
 
   expect(img1).toBe(img2);
 });
@@ -14,7 +13,7 @@ test('ImageStorage.getOrAdd return the same object when using same key', () => {
 test('Destroying StoredImage should cause ImageStorage forget it', () => {
   const imageStorage = new ImageStorage(null!);
   const PATH = 'IMAGE';
-  const img = imageStorage.getOrAdd(PATH);
+  const img = imageStorage.getOrAdd(PATH, 1);
 
   img.destroy();
 
@@ -22,5 +21,5 @@ test('Destroying StoredImage should cause ImageStorage forget it', () => {
     expect(image === img).false;
   }
 
-  expect(img === imageStorage.getOrAdd(PATH)).false;
+  expect(img === imageStorage.getOrAdd(PATH, 1)).false;
 });

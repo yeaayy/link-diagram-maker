@@ -15,18 +15,28 @@ export type SnapshotAction<I, D> =
   SnapshotActionEdit<I, D> |
   SnapshotActionDelete<I>;
 
-export function mergeSnapshotAction<I, D>(a: SnapshotAction<I, D> | undefined, b: SnapshotAction<I, D>): SnapshotAction<I, D> | undefined | null {
-  if (a === undefined)
+export function mergeSnapshotAction<I extends Object, D extends Object>(a: SnapshotAction<I, D> | undefined, b: SnapshotAction<I, D> | undefined): SnapshotAction<I, D> | undefined | null {
+  if (a === undefined) {
+    if (b === undefined) {
+      return undefined;
+    }
     return {...b};
+  }
+  if (b === undefined) {
+    return {...a};
+  }
   switch(a.type) {
     case SnapshotType.create:
       switch (b.type) {
         case SnapshotType.edit:
-          return {
-            ...a,
-            ...b,
-            type: SnapshotType.create,
-          };
+          const result: SnapshotActionCreate<I, D> = {...a};
+          for (const prop in b) {
+            const key = prop as keyof SnapshotActionEdit<I, D>;
+            if (prop !== 'type' && b[key] !== undefined) {
+              (result as any)[key] = b[key];
+            }
+          }
+          return result;
         case SnapshotType.delete:
           return undefined;
       }
@@ -34,10 +44,14 @@ export function mergeSnapshotAction<I, D>(a: SnapshotAction<I, D> | undefined, b
     case SnapshotType.edit:
       switch (b.type) {
         case SnapshotType.edit:
-          return {
-            ...a,
-            ...b,
-          };
+          const result = {...a};
+          for (const prop in b) {
+            const key = prop as keyof SnapshotActionEdit<I, D>;
+            if (b[key] !== undefined) {
+              result[key] = b[key];
+            }
+          }
+          return result;
         case SnapshotType.delete:
           return b;
       }
@@ -86,7 +100,6 @@ export class Snapshot {
   public connections = new Map<string, ConnectionSnapshotAction>();
 
   public readonly state = new TypedEventListener<[dirty: boolean]>();
-  private _isDirty = false;
 
   constructor(
     private boardId: string,
@@ -96,47 +109,80 @@ export class Snapshot {
     const key = this.getNoteKey(action);
     const old = this.notes.get(key);
     const result = mergeSnapshotAction(old, action);
+    const isDirty = this.isDirty;
     if (result === null) {
-      console.warn(`SnapshotAction not in order: ${old}, ${action}`);
+      console.warn('NoteSnapshotAction not in order:', old, action);
       return;
     } else if (result === undefined) {
       this.notes.delete(key);
     } else {
       this.notes.set(key, result);
     }
-    if (!this._isDirty) {
-      this.state.emit(true);
-    }
-    this._isDirty = true;
+    this.checkDirty(isDirty);
   }
 
   public pushConnectionSnapshotAction(action: ConnectionSnapshotAction) {
     const key = this.getConnectionKey(action);
     const old = this.connections.get(key);
     const result = mergeSnapshotAction(old, action);
+    const isDirty = this.isDirty;
     if (result === null) {
-      console.warn(`SnapshotAction not in order: ${old}, ${action}`);
+      console.warn('ConnectionSnapshotAction not in order:', old, action);
       return;
     } else if (result === undefined) {
       this.connections.delete(key);
     } else {
       this.connections.set(key, result);
     }
-    if (!this._isDirty) {
-      this.state.emit(true);
+    this.checkDirty(isDirty);
+  }
+
+  public shiftNoteSnapshotAction(action: NoteSnapshotAction) {
+    const key = this.getNoteKey(action);
+    const old = this.notes.get(key);
+    const result = mergeSnapshotAction(action, old);
+    const isDirty = this.isDirty;
+    if (result === null) {
+      console.warn('NoteSnapshotAction not in order:', action, old);
+      return;
+    } else if (result === undefined) {
+      this.notes.delete(key);
+    } else {
+      this.notes.set(key, result);
     }
-    this._isDirty = true;
+    this.checkDirty(isDirty);
+  }
+
+  public shiftConnectionSnapshotAction(action: ConnectionSnapshotAction) {
+    const key = this.getConnectionKey(action);
+    const old = this.connections.get(key);
+    const result = mergeSnapshotAction(action, old);
+    const isDirty = this.isDirty;
+    if (result === null) {
+      console.warn('ConnectionSnapshotAction not in order:', action, old);
+      return;
+    } else if (result === undefined) {
+      this.connections.delete(key);
+    } else {
+      this.connections.set(key, result);
+    }
+    this.checkDirty(isDirty);
+  }
+
+  private checkDirty(prev: boolean) {
+    const curr = this.isDirty;
+    if (curr === prev) return;
+    this.state.emit(curr);
   }
 
   public get isDirty() {
-    return this._isDirty;
+    return this.notes.size > 0 || this.connections.size > 0;
   }
 
   public reset() {
-    this._isDirty = false;
-    this.state.emit(false);
     this.notes.clear();
     this.connections.clear();
+    this.state.emit(false);
   }
 
   public getNoteKey(note: NoteID) {
@@ -160,5 +206,15 @@ export class Snapshot {
       result.conn.push(conn);
     }
     return result;
+  }
+
+  fromRaw(data: any) {
+    for (const note of data.note) {
+      this.notes.set(this.getNoteKey(note), note);
+    }
+    for (const conn of data.conn) {
+      this.connections.set(this.getConnectionKey(conn), conn);
+    }
+    return this;
   }
 }

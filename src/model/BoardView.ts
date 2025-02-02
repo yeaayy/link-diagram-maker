@@ -1,8 +1,9 @@
-import { Snapshot } from "@/snapshot/Snapshot";
+import { Snapshot, type ConnectionSnapshotAction, type NoteSnapshotAction, SnapshotType } from "@/snapshot/Snapshot";
 import TypedEventListener from "@/utils/TypedEventListener";
 import { ConnectionView, type ConnPosition } from "./ConnectionView";
 import { NoteView } from "./NoteView";
 import type { StoredImage } from "./StoredImage";
+import type { ImageStorage } from "@/ImageStorage";
 
 export class BoardView {
   public dx = 0;
@@ -23,14 +24,14 @@ export class BoardView {
   public readonly noteCreated = new TypedEventListener<NoteView>();
   public readonly connectionCreated = new TypedEventListener<ConnectionView>();
   public readonly previewConnection = new TypedEventListener<[from: HTMLElement, toX: number, toY: number]>();
+  public readonly connectionSnapshotAction = new TypedEventListener<[backward: ConnectionSnapshotAction, forward: ConnectionSnapshotAction]>();
+  public readonly noteSnapshotAction = new TypedEventListener<[backward: NoteSnapshotAction, forward: NoteSnapshotAction]>();
 
   public readonly noteMap = new Map<number, NoteView>();
-  public readonly snapshot;
 
   constructor(
     public readonly id: string
   ) {
-    this.snapshot = new Snapshot(id);
   }
 
   public newNote(id: number, x: number, y: number, text: string, img: StoredImage | null = null) {
@@ -95,5 +96,97 @@ export class BoardView {
     }
 
     return a.conn.has(b);
+  }
+
+  public applySnapshot(imgStore: ImageStorage, snapshot: Snapshot): boolean {
+    // TODO: Check if the snapshot applicable before actually applying.
+    for (const a of snapshot.notes.values()) {
+      switch (a.type) {
+        case SnapshotType.create:
+          this.newNote(a.id, a.x, a.y, a.text, imgStore.findById(a.img));
+          break;
+        case SnapshotType.edit: {
+          const note = this.noteMap.get(a.id);
+          if (!note) return false;
+          if (a.x !== undefined && a.y !== undefined) {
+            note.move(a.x - note.x, a.y - note.y);
+          }
+          if (a.text !== undefined) {
+            note.text = a.text;
+          }
+          if (a.img !== undefined) {
+            note.img = imgStore.findById(a.img);
+          }
+          break;
+        }
+        case SnapshotType.delete: {
+          const note = this.noteMap.get(a.id);
+          if (!note) return false;
+          note.destroy();
+          break;
+        }
+      }
+    }
+    for (const a of snapshot.connections.values()) {
+      switch (a.type) {
+        case SnapshotType.create:
+          this.newConnection(a.a, a.pa, a.b, a.pb, a.color, a.size, a.dash.length === 0 ? [] : a.dash.split(' ').map(parseFloat));
+          break;
+        case SnapshotType.edit: {
+          const conn = this.findConnection(a.a, a.pa, a.b, a.pb);
+          if (!conn) return false;
+          if (a.color !== undefined) {
+            conn.color = a.color;
+          }
+          if (a.size !== undefined) {
+            conn.size = a.size;
+          }
+          if (a.dash !== undefined) {
+            conn.dash = a.dash.length === 0 ? [] : a.dash.split(' ').map(parseFloat);
+          }
+          break;
+        }
+        case SnapshotType.delete: {
+          const conn = this.findConnection(a.a, a.pa, a.b, a.pb);
+          // Skip when the connection already deleted when the note got deleted.
+          // This might skip invalid deletion.
+          if (conn) {
+            conn.destroy();
+          }
+          break;
+        }
+      }
+    }
+    return true;
+  }
+
+  private findConnection(a: number, pa: ConnPosition, b: number, pb: ConnPosition) {
+    return this.connections.find(c => c.a.id === a && c.pa === pa && c.b.id === b && c.pb === pb);
+  }
+
+  private toRaw() {
+    return {
+      id: this.id,
+      note: this.notes.map(note => {
+        return {
+          id: note.id,
+          x: note.x,
+          y: note.y,
+          text: note.text,
+          img: note.img?.id || 0,
+        };
+      }),
+      conn: this.connections.map(conn => {
+        return {
+          a: conn.a.id,
+          pa: conn.pa,
+          b: conn.b.id,
+          pb: conn.pb,
+          color: conn.color,
+          size: conn.size,
+          dash: conn.dash.join(' '),
+        };
+      }),
+    };
   }
 }

@@ -26,6 +26,7 @@ export class NoteView {
   public readonly clicked = new TypedEventListener<NoteView>();
   public readonly startDrag = new TypedEventListener<NoteView>();
   public readonly dragging = new TypedEventListener<[NoteView, dx: number, dy: number]>();
+  public readonly endDrag = new TypedEventListener<[NoteView]>();
   public readonly dots: HTMLElement[] = [];
   public readonly conn = new Map<number, ConnectionView>;
 
@@ -56,6 +57,7 @@ export class NoteView {
     this.pointerHandler = new PointerHandler({
       onstart: this.onPointerStart,
       onmove: this.onPointerMove,
+      onend: this.onPointerEnd,
       onclick: this.onPointerClick,
       stopPropagation: true,
       instance: this,
@@ -76,7 +78,7 @@ export class NoteView {
     this.img = _img;
     this.viewRoot.dataset['id'] = id.toString();
 
-    board.snapshot.pushNoteSnapshotAction(NoteSnapshot.create(this));
+    board.noteSnapshotAction.emit(NoteSnapshot.delete(this), NoteSnapshot.create(this));
   }
 
   public attach(dst: HTMLElement) {
@@ -106,15 +108,17 @@ export class NoteView {
   }
 
   public destroy() {
+    const reverse = NoteSnapshot.create(this);
     for (const conn of this.conn.values()) {
       conn.destroy();
     }
+    this.detach();
     this.img = null;
     const i = this.board.notes.indexOf(this);
     this.board.notes.splice(i, 1);
     this.board.noteMap.delete(this.id);
-    this.detach();
-    this.board.snapshot.pushNoteSnapshotAction(NoteSnapshot.delete(this));
+
+    this.board.noteSnapshotAction.emit(reverse, NoteSnapshot.delete(this));
   }
 
   public highlight(highlight = true) {
@@ -126,11 +130,12 @@ export class NoteView {
   }
 
   public move(dx: number, dy: number) {
+    const reverse = NoteSnapshot.edit(this, 'x', 'y');
     this._x += dx;
     this._y += dy;
     this.updatePosition();
 
-    this.board.snapshot.pushNoteSnapshotAction(NoteSnapshot.edit(this, 'x', 'y'));
+    this.board.noteSnapshotAction.emit(reverse, NoteSnapshot.edit(this, 'x', 'y'));
   }
 
   public get x() {
@@ -146,6 +151,7 @@ export class NoteView {
   }
 
   public set img(img: StoredImage | null) {
+    const reverse = NoteSnapshot.edit(this, 'img');
     if (this._img) {
       this._img.destroyed.remove(this.onImageDestroyed, this);
     }
@@ -161,7 +167,7 @@ export class NoteView {
       this._img = img;
 
       if (this.isAttached()) {
-        this.board.snapshot.pushNoteSnapshotAction(NoteSnapshot.edit(this, 'img'));
+        this.board.noteSnapshotAction.emit(reverse, NoteSnapshot.edit(this, 'img'));
       }
     }
   }
@@ -171,6 +177,7 @@ export class NoteView {
   }
 
   public set text(text: string) {
+    const reverse = NoteSnapshot.edit(this, 'text');
     this._text = text;
     if (text.length == 0) {
       this.viewContent.classList.add('empty');
@@ -181,7 +188,7 @@ export class NoteView {
     this.updatePosition();
 
     if (this.isAttached())
-      this.board.snapshot.pushNoteSnapshotAction(NoteSnapshot.edit(this, 'text'));
+      this.board.noteSnapshotAction.emit(reverse, NoteSnapshot.edit(this, 'text'));
   }
 
   private onImageDestroyed(img: StoredImage) {
@@ -194,6 +201,10 @@ export class NoteView {
 
   private onPointerMove(ev: GenericPointerEvent, e: PointerMoveEvent) {
     this.dragging.emit(this, e.dx / this.board.scale, e.dy / this.board.scale);
+  }
+
+  private onPointerEnd(e: GenericPointerEvent, px: number, py: number) {
+    this.endDrag.emit(this);
   }
 
   private onStartDragDot(e: GenericPointerEvent, px: number, py: number) {

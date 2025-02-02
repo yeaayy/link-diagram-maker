@@ -3,9 +3,11 @@ import { useImageSelector } from '@/ImageSelector';
 import { useAlert } from '@/alert';
 import { useHttp } from '@/http';
 import type { BoardView } from '@/model/BoardView';
+import type ActionHistory from '@/snapshot/ActionHistory';
+import { Snapshot, type ConnectionSnapshotAction, type NoteSnapshotAction } from '@/snapshot/Snapshot';
 import keyboard from '@/utils/keyboard';
 import sleep from '@/utils/sleep';
-import { faArrowCircleLeft, faCirclePlus, faHome, faImage, faPlusCircle, faSave, faWarning } from '@fortawesome/free-solid-svg-icons';
+import { faArrowCircleLeft, faArrowRotateLeft, faArrowRotateRight, faCirclePlus, faHome, faImage, faPlusCircle, faSave, faWarning } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { AxiosError } from 'axios';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
@@ -16,6 +18,7 @@ import ThemeSelector from './ThemeSelector.vue';
 const prop = defineProps<{
   board: BoardView;
   editable: boolean;
+  history: ActionHistory;
 }>();
 
 const emit = defineEmits<{
@@ -30,8 +33,15 @@ const boardName = defineModel<string>('boardName', { default: '' });
 const http = useHttp();
 const imageSelector = useImageSelector();
 const isDirty = ref(false);
+const undoName = ref(undefined as undefined | string);
+const redoName = ref(undefined as undefined | string);
 const router = useRouter();
 const alert = useAlert();
+const snapshot = new Snapshot(prop.board.id);
+
+if (import.meta.env.DEV) {
+  (window as any).snapshot = snapshot;
+}
 
 function renameBoard(newName: string) {
   if (newName == boardName.value) return;
@@ -43,7 +53,6 @@ function renameBoard(newName: string) {
 }
 
 async function doSave() {
-  const snapshot = prop.board.snapshot;
   const input = snapshot.toRaw();
   snapshot.reset()
 
@@ -77,6 +86,19 @@ async function doSave() {
   pendingSave = null;
 }
 
+function onHistoryChanged(history: ActionHistory) {
+  undoName.value = history.getUndoName();
+  redoName.value = history.getRedoName();
+}
+
+function onNoteSnapshotAction(backward: NoteSnapshotAction, forward: NoteSnapshotAction) {
+  snapshot.pushNoteSnapshotAction(forward);
+}
+
+function onConnectionSnapshotAction(backward: ConnectionSnapshotAction, forward: ConnectionSnapshotAction) {
+  snapshot.pushConnectionSnapshotAction(forward);
+}
+
 function onStateChanged(state: boolean) {
   isDirty.value = state;
 }
@@ -84,14 +106,26 @@ function onStateChanged(state: boolean) {
 function onSave() {
   if (!prop.editable) return;
 
-  if (!prop.board.snapshot.isDirty) return;
+  if (!snapshot.isDirty) return;
 
   if (pendingSave) return;
   pendingSave = doSave();
 }
 
+function onUndo() {
+  if (undoName.value !== undefined) {
+    prop.history.undo();
+  }
+}
+
+function onRedo() {
+  if (redoName.value !== undefined) {
+    prop.history.redo();
+  }
+}
+
 function gotoMyBoards() {
-  if (prop.board.snapshot.isDirty) {
+  if (snapshot.isDirty) {
     if (!confirm('You have unsaved work, are you sure?')) {
       return;
     }
@@ -101,13 +135,23 @@ function gotoMyBoards() {
 
 onMounted(() => {
   keyboard.addShortcut('ctrl+s', onSave);
-  prop.board.snapshot.state.listen(onStateChanged);
-  interval = setInterval(onSave, 60 * 1000);
+  keyboard.addShortcut('ctrl+z', onUndo);
+  keyboard.addShortcut('ctrl+shift+z', onRedo);
+  snapshot.state.listen(onStateChanged);
+  prop.board.noteSnapshotAction.listen(onNoteSnapshotAction);
+  prop.board.connectionSnapshotAction.listen(onConnectionSnapshotAction);
+  prop.history.changed.listen(onHistoryChanged);
+  interval = setInterval(onSave, parseInt(import.meta.env.VITE_AUTOSAVE_INTERVAL) * 1000);
 });
 
 onBeforeUnmount(() => {
   keyboard.removeShortcut('ctrl+s', onSave);
-  prop.board.snapshot.state.remove(onStateChanged);
+  keyboard.removeShortcut('ctrl+z', onUndo);
+  keyboard.removeShortcut('ctrl+shift+z', onRedo);
+  snapshot.state.remove(onStateChanged);
+  prop.board.noteSnapshotAction.remove(onNoteSnapshotAction);
+  prop.board.connectionSnapshotAction.remove(onConnectionSnapshotAction);
+  prop.history.changed.remove(onHistoryChanged);
   clearInterval(interval);
 })
 </script>
@@ -115,7 +159,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="toolbar">
     <div class="title">
-      <FontAwesomeIcon class="icon" :icon="faArrowCircleLeft" @click="gotoMyBoards" title="Back to my boards" />
+      <FontAwesomeIcon class="icon enable" :icon="faArrowCircleLeft" @click="gotoMyBoards" title="Back to my boards" />
       <ClickToEdit max-length="255" :read-only="!prop.board.editable" v-model="boardName" @finish="renameBoard" />
       <div class="theme-selector">
         <ThemeSelector />
@@ -137,6 +181,8 @@ onBeforeUnmount(() => {
         <FontAwesomeIcon :icon="faImage"/>
         <FontAwesomeIcon class="subicon" :icon="faCirclePlus"/>
       </div>
+      <FontAwesomeIcon :class="{icon: true, enable: undoName !== undefined}" :icon="faArrowRotateLeft" @click="onUndo" :title="'Undo ' + (undoName || '') + ' (CTRL+Z)'" />
+      <FontAwesomeIcon :class="{icon: true, enable: redoName !== undefined}" :icon="faArrowRotateRight" @click="onRedo" :title="'Redo ' + (redoName || '') + ' (CTRL+SHIFT+Z)'" />
     </div>
   </div>
 </template>
@@ -156,22 +202,14 @@ onBeforeUnmount(() => {
   position: relative;
   font-size: 1.25rem;
   padding: 0.25rem;
-
-  &:hover {
-    background-color: lightblue;
-  }
-}
-
-.save {
   color: grey;
 
-  &:hover {
-    background-color: initial;
+  &.enable:hover {
+    background-color: lightblue;
   }
 
   &.enable {
-    color: #416ec5;
-
+    color: var(--black);
   }
 }
 

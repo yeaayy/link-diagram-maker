@@ -1,8 +1,15 @@
 import { BoardView } from '@/model/BoardView';
 import { ConnPosition } from '@/model/ConnectionView';
-import { test, expect } from 'vitest';
-import { SnapshotType, type ConnectionSnapshotActionEdit } from './Snapshot';
+import { expect, test } from 'vitest';
 import ConnectionSnapshot from './ConnectionSnapshot';
+import { Snapshot, SnapshotType, type ConnectionSnapshotActionEdit } from './Snapshot';
+
+function newSnapshot(board: BoardView) {
+  const snapshot = new Snapshot(board.id);
+  board.noteSnapshotAction.listen((backward, forward) => snapshot.pushNoteSnapshotAction(forward));
+  board.connectionSnapshotAction.listen((backward, forward) => snapshot.pushConnectionSnapshotAction(forward));
+  return snapshot;
+}
 
 test('Connection create have correct side effect', () => {
   const board = new BoardView('');
@@ -55,8 +62,7 @@ test('Connection empty > create', () => {
   const board = new BoardView('');
   const noteA = board.newNote(0, 0, 0, '');
   const noteB = board.newNote(1, 0, 0, '');
-  const s = board.snapshot;
-  s.reset();
+  const s = newSnapshot(board);
 
   // Test
   const conn = board.newConnection(noteA, ConnPosition.top, noteB, ConnPosition.top);
@@ -73,7 +79,7 @@ test('Connection empty > edit', () => {
   const board = new BoardView('');
   const noteA = board.newNote(0, 0, 0, '');
   const noteB = board.newNote(1, 0, 0, '');
-  const s = board.snapshot;
+  const s = newSnapshot(board);
   
   const conn = board.newConnection(noteA, ConnPosition.top, noteB, ConnPosition.top);
   conn.attach(svg);
@@ -94,7 +100,7 @@ test('Connection empty > delete', () => {
   const board = new BoardView('');
   const noteA = board.newNote(0, 0, 0, '');
   const noteB = board.newNote(1, 0, 0, '');
-  const s = board.snapshot;
+  const s = newSnapshot(board);
   const conn = board.newConnection(noteA, ConnPosition.top, noteB, ConnPosition.top);
   s.reset();
 
@@ -112,7 +118,7 @@ test('Connection create > create', () => {
   const board = new BoardView('');
   const noteA = board.newNote(0, 0, 0, '');
   const noteB = board.newNote(1, 0, 0, '');
-  const s = board.snapshot;
+  const s = newSnapshot(board);
   const conn = board.newConnection(noteA, ConnPosition.top, noteB, ConnPosition.top);
   s.reset();
 
@@ -126,7 +132,7 @@ test('Connection create > edit', () => {
   const board = new BoardView('');
   const noteA = board.newNote(0, 0, 0, '');
   const noteB = board.newNote(1, 0, 0, '');
-  const s = board.snapshot;
+  const s = newSnapshot(board);
   s.reset();
 
   // Test
@@ -148,7 +154,7 @@ test('Connection create > delete', () => {
   const board = new BoardView('');
   const noteA = board.newNote(0, 0, 0, '');
   const noteB = board.newNote(1, 0, 0, '');
-  const s = board.snapshot;
+  const s = newSnapshot(board);
   s.reset();
 
   // Test
@@ -166,7 +172,7 @@ test('Connection edit > create', () => {
   const board = new BoardView('');
   const noteA = board.newNote(0, 0, 0, '');
   const noteB = board.newNote(1, 0, 0, '');
-  const s = board.snapshot;
+  const s = newSnapshot(board);
   const conn = board.newConnection(noteA, ConnPosition.top, noteB, ConnPosition.top);
   conn.attach(svg);
   s.reset();
@@ -182,7 +188,7 @@ test('Connection edit > edit', () => {
   const board = new BoardView('');
   const noteA = board.newNote(0, 0, 0, '');
   const noteB = board.newNote(1, 0, 0, '');
-  const s = board.snapshot;
+  const s = newSnapshot(board);
   const conn = board.newConnection(noteA, ConnPosition.top, noteB, ConnPosition.top, '000000', 5);
   conn.attach(svg);
   s.reset();
@@ -205,7 +211,7 @@ test('Connection edit > delete', () => {
   const board = new BoardView('');
   const noteA = board.newNote(0, 0, 0, '');
   const noteB = board.newNote(1, 0, 0, '');
-  const s = board.snapshot;
+  const s = newSnapshot(board);
   const conn = board.newConnection(noteA, ConnPosition.top, noteB, ConnPosition.top, '000000', 5);
   conn.attach(svg);
   s.reset();
@@ -225,7 +231,7 @@ test('Connection delete > create', () => {
   const board = new BoardView('');
   const noteA = board.newNote(0, 0, 0, '');
   const noteB = board.newNote(1, 0, 0, '');
-  const s = board.snapshot;
+  const s = newSnapshot(board);
   const conn1 = board.newConnection(noteA, ConnPosition.top, noteB, ConnPosition.top, '000000', 5);
   s.reset();
 
@@ -246,7 +252,7 @@ test('Connection delete > delete', () => {
   const board = new BoardView('');
   const noteA = board.newNote(0, 0, 0, '');
   const noteB = board.newNote(1, 0, 0, '');
-  const s = board.snapshot;
+  const s = newSnapshot(board);
   const conn = board.newConnection(noteA, ConnPosition.top, noteB, ConnPosition.top, '000000', 5);
   s.reset();
 

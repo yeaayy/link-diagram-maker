@@ -35,7 +35,6 @@ function onFileUpload(e: Event) {
   if (!files) return;
   for (let i = 0; i < files.length; i++) {
     const file = files.item(i)!;
-    console.log('upload', file)
     emit('drop', file, e);
   }
 }

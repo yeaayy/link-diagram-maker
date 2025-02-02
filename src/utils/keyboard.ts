@@ -106,6 +106,7 @@ export function getModifier(e: EventWithModifier) {
 }
 
 const keyboard = new KeyboardAction();
-// @ts-ignore
-window.keyboard = keyboard;
+if (import.meta.env.DEV) {
+  (window as any).keyboard = keyboard;
+}
 export default keyboard;

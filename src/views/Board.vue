@@ -2,7 +2,7 @@
 import { imageStorageKey } from '@/ImageStorage';
 import { useAlert } from '@/alert';
 import BoardEditor from '@/components/BoardEditor.vue';
-import { useHttp } from '@/http';
+import { useHttp, type BoardData } from '@/http';
 import { useLoading } from '@/loading';
 import { BoardView } from '@/model/BoardView';
 import sleep from '@/utils/sleep';
@@ -27,7 +27,7 @@ function showNotFound() {
   });
 }
 
-function proccessData(board: BoardView, data: any) {
+function proccessData(board: BoardView, data: BoardData) {
   try {
     board.name = data.name;
     board.editable = data.editable;
@@ -37,7 +37,7 @@ function proccessData(board: BoardView, data: any) {
         parseFloat(note.x),
         parseFloat(note.y),
         note.text,
-        note.img ? imageStorage.getOrAdd(note.img) : null,
+        note.img ? imageStorage.getOrAdd(note.img.path, parseInt(note.img.id)) : null,
       );
     }
     for (const conn of data.conns) {
@@ -51,7 +51,6 @@ function proccessData(board: BoardView, data: any) {
         conn.dash == '' ? [] : conn.dash.split(' ').map((val: any) => parseFloat(val)),
       );
     }
-    board.snapshot.reset();
     return board;
   } catch (e) {
     alert({

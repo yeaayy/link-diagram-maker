@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ConnectionView } from '@/model/ConnectionView';
+import type ActionHistory from '@/snapshot/ActionHistory';
 import { faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { computed, ref, shallowRef, watch, watchEffect, type ComponentInstance, type Ref } from 'vue';
@@ -11,6 +12,7 @@ import DropdownItem from './DropdownItem.vue';
 const prop = defineProps<{
   connection: ConnectionView[];
   delete: () => void;
+  history: ActionHistory;
 }>();
 
 const size = shallowRef(null! as HTMLInputElement);
@@ -31,11 +33,16 @@ const defaultPattern = [
 ];
 
 function set<K extends keyof ConnectionView>(name: K, value: ConnectionView[K], multiRef: Ref<boolean>) {
+
+  prop.history.begin('change connection ' + name);
   for (const c of prop.connection) {
     c[name] = value;
   }
   if (multiRef.value) {
     multiRef.value = false;
+  }
+  if (name === 'color') {
+    prop.history.end();
   }
 }
 

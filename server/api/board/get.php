@@ -33,11 +33,10 @@ $notes = [];
 while ($row = $s->fetch()) {
   $img = null;
   if (!empty($row['image_id'])) {
-    // $img = [
-    //   'id' => $row['image_id'],
-    //   'path' => $row['path'] . '.' . $row['ext'],
-    // ];
-    $img = $row['path'] . '.' . $row['ext'];
+    $img = [
+      'id' => $row['image_id'],
+      'path' => $row['path'] . '.' . $row['ext'],
+    ];
   }
   array_push($notes, [
     'id' => $row['note_id'],

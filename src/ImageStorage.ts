@@ -37,10 +37,19 @@ export class ImageStorage {
     return result;
   }
 
-  public getOrAdd(path: string) {
-    const result = this.map.get(path);
+  public findById(id: any) {
+    for (const img of this.map.values()) {
+      if (img.id === id) return img;
+    }
+    return null;
+  }
+
+  public getOrAdd(path: string, id: number) {
+    let result = this.map.get(path);
     if (result) return result;
-    return this.add(path);
+    result = this.add(path);
+    result.id = id;
+    return result;
   }
 
   public getAllRef() {
@@ -55,8 +64,7 @@ export class ImageStorage {
       try {
         const { data } = await this.http.img.get();
         for (const item of data.result) {
-          const img = this.getOrAdd(item.path);
-          img.id = item.id;
+          const img = this.getOrAdd(item.path, item.id);
           img.name = item.name;
           img.hash = item.hash;
         }
@@ -88,8 +96,7 @@ export class ImageStorage {
     while (true) {
       try {
         const { data } = await this.http.img.upload(file);
-        const result = this.getOrAdd(data.path);
-        result.id = data.id;
+        const result = this.getOrAdd(data.path, parseInt(data.id));
         result.name = data.name;
         result.hash = hash;
         return result;

@@ -42,7 +42,7 @@ export class ConnectionView {
     this.view.addEventListener('click', this);
     this.visual.addEventListener('click', this);
 
-    board.snapshot.pushConnectionSnapshotAction(ConnectionSnapshot.create(this));
+    board.connectionSnapshotAction.emit(ConnectionSnapshot.delete(this), ConnectionSnapshot.create(this));
   }
 
   public attach(dst: SVGElement) {
@@ -62,7 +62,7 @@ export class ConnectionView {
   }
 
   public destroy() {
-    this.board.snapshot.pushConnectionSnapshotAction(ConnectionSnapshot.delete(this));
+    this.board.connectionSnapshotAction.emit(ConnectionSnapshot.create(this), ConnectionSnapshot.delete(this));
     const index = this.board.connections.indexOf(this);
     if (index !== -1) {
       this.board.connections.splice(index, 1);
@@ -77,13 +77,14 @@ export class ConnectionView {
   }
 
   public set color(v: string) {
+    const reverse = ConnectionSnapshot.edit(this, 'color');
     this.board.defaultColor = v;
     this._color = v;
     this.view.setAttribute('stroke', '#' + v);
     this.visual.setAttribute('stroke', '#' + v);
 
     if (this.isAttached())
-      this.board.snapshot.pushConnectionSnapshotAction(ConnectionSnapshot.edit(this, 'color'));
+      this.board.connectionSnapshotAction.emit(reverse, ConnectionSnapshot.edit(this, 'color'));
   }
 
   public get color() {
@@ -91,6 +92,7 @@ export class ConnectionView {
   }
 
   public set size(v: number) {
+    const reverse = ConnectionSnapshot.edit(this, 'size');
     this.board.defaultSize = v;
     this._size = v;
     this.updateDash();
@@ -98,7 +100,7 @@ export class ConnectionView {
     this.visual.setAttribute('stroke-width', v.toString());
 
     if (this.isAttached())
-      this.board.snapshot.pushConnectionSnapshotAction(ConnectionSnapshot.edit(this, 'size'));
+      this.board.connectionSnapshotAction.emit(reverse, ConnectionSnapshot.edit(this, 'size'));
   }
 
   public get size() {
@@ -107,12 +109,13 @@ export class ConnectionView {
 
   public set dash(dash: number[]) {
     if (ConnectionView.isDashEqual(this._dash, dash)) return;
+    const reverse = ConnectionSnapshot.edit(this, 'dash');
     this.board.defaultDash = dash;
     this._dash = dash;
     this.updateDash();
 
     if (this.isAttached())
-      this.board.snapshot.pushConnectionSnapshotAction(ConnectionSnapshot.edit(this, 'dash'));
+      this.board.connectionSnapshotAction.emit(reverse, ConnectionSnapshot.edit(this, 'dash'));
   }
 
   public get dash() {

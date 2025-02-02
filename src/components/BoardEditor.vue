@@ -10,8 +10,11 @@ import { BoardView } from '@/model/BoardView';
 import { ConnectionView } from '@/model/ConnectionView';
 import { NoteView } from '@/model/NoteView';
 import type { StoredImage } from '@/model/StoredImage';
+import ActionHistory from '@/snapshot/ActionHistory';
+import { Snapshot, type ConnectionSnapshotAction, type NoteSnapshotAction } from '@/snapshot/Snapshot';
 import { DropArea } from '@/utils/DropArea';
 import PointerHandler, { type GenericPointerEvent, type PointerMoveEvent } from '@/utils/PointerHandler';
+import TriggerOnce from '@/utils/TriggerOnce';
 import keyboard, { getModifier } from '@/utils/keyboard';
 import { faUpload, faWarning } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
@@ -19,7 +22,7 @@ import { inject, onBeforeUnmount, onMounted, provide, ref, shallowReactive, shal
 
 let px = 0, py = 0;
 let draggedNote: null | NoteView = null;
-const SENSITIVITY = 2;
+const SENSITIVITY = 5;
 const confirm = useConfirm();
 const root = shallowRef(null! as HTMLDivElement);
 const noteContainer = shallowRef(null! as HTMLDivElement);
@@ -29,6 +32,7 @@ const selectedConnection: Ref<ConnectionView[]> = ref([]);
 const selectedNote = shallowRef([] as NoteView[]);
 const noteEditor = shallowRef(null! as ComponentInstance<typeof NoteEditor>);
 const imageSelector = shallowRef(null! as ComponentInstance<typeof ImageSelector>);
+const fixSelection = new TriggerOnce(onFixSelection);
 const imageStorage = inject(imageStorageKey)!;
 const dropArea = new DropArea('image/');
 const poinerHandler = new PointerHandler({
@@ -51,12 +55,23 @@ const prop = defineProps<{
   board: BoardView;
 }>();
 const board = shallowReactive(prop.board);
-board.noteCreated.listen(onNoteCreated);
-board.connectionCreated.listen(onConnectionCreated);
-board.previewConnection.listen(onPreviewConnection);
+const history = new ActionHistory(parseInt(import.meta.env.VITE_UNDO_LIMIT), {
+  apply(snapshot) {
+    board.applySnapshot(imageStorage, snapshot);
+  },
+}, () => new Snapshot(board.id));
+
 if (import.meta.env.DEV) {
-  // @ts-ignore
-  window.board = board;
+  (window as any).board = board;
+  (window as any).actionHistory = history;
+}
+
+function onNoteSnapshotAction(backward: NoteSnapshotAction, forward: NoteSnapshotAction) {
+  history.addNoteSnapshotAction(backward, forward);
+}
+
+function onconnectionSnapshotAction(backward: ConnectionSnapshotAction, forward: ConnectionSnapshotAction) {
+  history.addConnectionSnapshotAction(backward, forward);
 }
 
 function isEditable() {
@@ -116,10 +131,12 @@ function onWindowResize() {
 
 function onPressDelete() {
   if (selectedConnection.value.length > 0) {
+    history.begin('delete connection');
     for (const conn of selectedConnection.value) {
       conn.destroy();
     }
     unselectConnection();
+    history.end();
   } else if (selectedNote.value.length > 0) {
     confirm({
       icon: faWarning,
@@ -127,22 +144,31 @@ function onPressDelete() {
       body: 'Delete selected note?',
     }).then(result => {
       if (!result) return;
+      history.begin('delete note');
       for (const note of selectedNote.value) {
         note.destroy();
       }
+      history.end();
       unselectNote();
     });
   }
 }
 
 function onForceDelete() {
-  for (const conn of selectedConnection.value) {
-    conn.destroy();
+  if (selectedConnection.value.length > 0) {
+    history.begin('delete connection');
+    for (const conn of selectedConnection.value) {
+      conn.destroy();
+    }
   }
-  for (const note of selectedNote.value) {
-    note.destroy();
+  if (selectedNote.value.length > 0) {
+    history.begin('delete note');
+    for (const note of selectedNote.value) {
+      note.destroy();
+    }
   }
   unselect();
+  history.end();
 }
 
 function selectAllNote() {
@@ -180,6 +206,27 @@ function unselect() {
   unselectNote();
 }
 
+function onFixSelection() {
+  let changed = false;
+  for (let i = 0; i < selectedNote.value.length; i++) {
+    if (!selectedNote.value[i].isAttached()) {
+      selectedNote.value.splice(i, 1);
+      changed = true;
+      i--;
+    }
+  }
+  if (changed) {
+    triggerRef(selectedNote);
+  }
+
+  for (let i = 0; i < selectedConnection.value.length; i++) {
+    if (!selectedConnection.value[i].isAttached()) {
+      selectedConnection.value.splice(i, 1);
+      i--;
+    }
+  }
+}
+
 function onPreviewConnection(from: HTMLElement, toX: number, toY: number) {
   const start = from.getBoundingClientRect();
   const scl = board.scale;
@@ -201,11 +248,13 @@ function resetView() {
 
 function createNewNote(img: StoredImage | null = null) {
   unselect();
+  history.begin('new note');
   const b = board
   const note = b.createNote(px / b.scale - b.dx, py / b.scale - b.dy, '', img);
   note.highlight();
   selectedNote.value.push(note);
   triggerRef(selectedNote);
+  history.end();
 }
 
 function createNewImageNote() {
@@ -216,10 +265,12 @@ function createNewImageNote() {
 
 function createNewNoteAtCenter(img: StoredImage | null = null) {
   unselect();
+  history.begin('new note');
   const b = board
   const note = b.createNote(b.width / 2 / b.scale - b.dx, b.height / 2 / b.scale - b.dy, '', img);
   selectedNote.value.push(note);
   note.highlight();
+  history.end();
 }
 
 function createNewImageNoteAtCenter() {
@@ -231,19 +282,30 @@ function createNewImageNoteAtCenter() {
 function onNoteCreated(note: NoteView) {
   note.attach(noteContainer.value);
   if (isEditable()) {
-    note.clicked.listen(onNoteClicked);
-    note.beforeDetached.listen(onBeforeNoteDetached);
-    note.startDrag.listen(onStartDragNote);
-    note.dragging.listen(onDragNote);
+    attachNoteListener(note);
   }
 }
 
 function onBeforeNoteDetached(note: NoteView) {
   if (!isEditable()) return;
+  removeNoteListener(note);
+  fixSelection.trigger();
+}
+
+function attachNoteListener(note: NoteView) {
+  note.clicked.listen(onNoteClicked);
+  note.beforeDetached.listen(onBeforeNoteDetached);
+  note.startDrag.listen(onStartDragNote);
+  note.dragging.listen(onDragNote);
+  note.endDrag.listen(onEndDragNote);
+}
+
+function removeNoteListener(note: NoteView) {
   note.clicked.remove(onNoteClicked);
   note.beforeDetached.remove(onBeforeNoteDetached);
   note.startDrag.remove(onStartDragNote);
   note.dragging.remove(onDragNote);
+  note.endDrag.remove(onEndDragNote);
 }
 
 function onNoteClicked(note: NoteView) {
@@ -260,6 +322,7 @@ function onNoteClicked(note: NoteView) {
     note.highlight(false);
   }
   triggerRef(selectedNote);
+  history.end();
 }
 
 function onStartDragNote(note: NoteView) {
@@ -271,11 +334,16 @@ function onStartDragNote(note: NoteView) {
 }
 
 function onDragNote(note: NoteView, dx: number, dy: number) {
+  history.begin('move note');
   if (draggedNote === null) {
     moveNote(dx, dy);
   } else {
     draggedNote.move(dx, dy);
   }
+}
+
+function onEndDragNote(note: NoteView) {
+  history.end();
 }
 
 function moveNote(dx: number, dy: number) {
@@ -285,32 +353,46 @@ function moveNote(dx: number, dy: number) {
 }
 
 function moveNoteLeft() {
+  history.begin('move note horizontal');
   moveNote(-SENSITIVITY, 0);
 }
 
 function moveNoteRight() {
+  history.begin('move note horizontal');
   moveNote(SENSITIVITY, 0);
 }
 
 function moveNoteUp() {
+  history.begin('move note vertical');
   moveNote(0, -SENSITIVITY);
 }
 
 function moveNoteDown() {
+  history.begin('move note vertical');
   moveNote(0, SENSITIVITY);
 }
 
 function onConnectionCreated(conn: ConnectionView) {
+  history.end();
   conn.attach(svg.value);
   conn.updateView();
   if (isEditable()) {
-    conn.clicked.listen(onConnectionClicked);
-    conn.beforeDetached.listen(onBeforeConnectionDetached)
+    attachConnectionListener(conn);
   }
 }
 
 function onBeforeConnectionDetached(conn: ConnectionView) {
   if (!isEditable()) return;
+  removeConnectionListener(conn);
+  fixSelection.trigger();
+}
+
+function attachConnectionListener(conn: ConnectionView) {
+  conn.clicked.listen(onConnectionClicked);
+  conn.beforeDetached.listen(onBeforeConnectionDetached)
+}
+
+function removeConnectionListener(conn: ConnectionView) {
   conn.clicked.remove(onConnectionClicked);
   conn.beforeDetached.remove(onBeforeConnectionDetached);
 }
@@ -328,6 +410,7 @@ function onConnectionClicked(conn: ConnectionView) {
     selectedConnection.value.splice(index, 1);
     conn.highlight(false);
   }
+  history.end();
 }
 
 function disableEditing() {
@@ -344,6 +427,13 @@ function disableEditing() {
   keyboard.removeShortcut('arrowright', moveNoteRight);
   keyboard.removeShortcut('arrowup', moveNoteUp);
   keyboard.removeShortcut('arrowdown', moveNoteDown);
+
+  for (const conn of board.connections) {
+    removeConnectionListener(conn);
+  }
+  for (const note of board.notes) {
+    removeNoteListener(note);
+  }
 }
 
 function enableEditing() {
@@ -360,9 +450,22 @@ function enableEditing() {
   keyboard.addShortcut('arrowright', moveNoteRight);
   keyboard.addShortcut('arrowup', moveNoteUp);
   keyboard.addShortcut('arrowdown', moveNoteDown);
+
+  for (const note of board.notes) {
+    attachNoteListener(note);
+  }
+  for (const conn of board.connections) {
+    attachConnectionListener(conn);
+  }
 }
 
 onMounted(async() => {
+  board.noteCreated.listen(onNoteCreated);
+  board.connectionCreated.listen(onConnectionCreated);
+  board.previewConnection.listen(onPreviewConnection);
+  board.noteSnapshotAction.listen(onNoteSnapshotAction);
+  board.connectionSnapshotAction.listen(onconnectionSnapshotAction);
+
   poinerHandler.attach(root.value, root.value.parentElement!);
   root.value.addEventListener('wheel', onWheel);
   onWindowResize();
@@ -373,18 +476,26 @@ onMounted(async() => {
   previewConnection.classList.add('preview-connection');
   previewConnection.setAttribute('stroke-linecap', 'round');
 
-  if (board.editable) {
-    enableEditing();
-  }
   for (const note of board.notes) {
-    onNoteCreated(note);
+    note.attach(noteContainer.value);
   }
   for (const conn of board.connections) {
-    onConnectionCreated(conn);
+    conn.attach(svg.value);
+    conn.updateView();
+  }
+
+  if (board.editable) {
+    enableEditing();
   }
 });
 
 onBeforeUnmount(() => {
+  board.noteCreated.remove(onNoteCreated);
+  board.connectionCreated.remove(onConnectionCreated);
+  board.previewConnection.remove(onPreviewConnection);
+  board.noteSnapshotAction.remove(onNoteSnapshotAction);
+  board.connectionSnapshotAction.remove(onconnectionSnapshotAction);
+
   poinerHandler.detach();
   root.value.removeEventListener('wheel', onWheel);
   window.removeEventListener('resize', onWindowResize);
@@ -400,6 +511,7 @@ onBeforeUnmount(() => {
   <Toolbar
     :board="board"
     :editable="board.editable"
+    :history="history"
     @home="resetView"
     @new-note="createNewNoteAtCenter"
     @new-image-note="createNewImageNoteAtCenter"
@@ -429,8 +541,8 @@ onBeforeUnmount(() => {
     </div>
   </div>
 
-  <ConnectionEditor v-if="selectedConnection.length > 0" :connection="selectedConnection" :delete="onPressDelete"></ConnectionEditor>
-  <NoteEditor ref="noteEditor" v-if="selectedNote.length === 1" :note="selectedNote[0]"></NoteEditor>
+  <ConnectionEditor v-if="selectedConnection.length > 0" :connection="selectedConnection" :delete="onPressDelete" :history="history" />
+  <NoteEditor ref="noteEditor" v-if="selectedNote.length === 1" :note="selectedNote[0]" :history="history" />
   <ImageSelector ref="imageSelector" />
 </template>
 
