@@ -1,6 +1,6 @@
 import './assets/main.css'
 
-import { createApp, ref, watchEffect } from 'vue'
+import { createApp, ref, watch, watchEffect } from 'vue'
 import App from './App.vue'
 import router from './router'
 import { Key, Settings } from './utils/Settings'
@@ -23,6 +23,10 @@ watchEffect(() => {
   const classList = document.body.classList;
   classList.remove('theme-light', 'theme-dark');
   classList.add(`theme-${usedTheme}`);
+});
+
+watch(theme, theme => {
+  settings.set(THEME, theme);
 });
 
 const app = createApp(App)
