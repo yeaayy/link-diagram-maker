@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { provide, ref, shallowRef, watch, type ShallowRef, watchEffect } from 'vue';
+import { provide, ref, shallowRef, watchEffect, type ShallowRef } from 'vue';
 
 const prop = defineProps<{
   relative?: HTMLElement | null
@@ -29,7 +29,7 @@ defineExpose({
 
 <template>
   <Teleport to="body" v-if="open">
-    <div class="overlay" @click="open = false"></div>
+    <div class="overlay" @click.self.stop="open = false"></div>
     <div ref="dropdown" class="dropdown">
       <slot></slot>
     </div>
@@ -56,7 +56,7 @@ defineExpose({
 
 .overlay {
   position: absolute;
-  z-index: 50;
+  z-index: 99;
   left: 0px;
   top: 0px;
   right: 0px;

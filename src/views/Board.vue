@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { imageStorageKey } from '@/ImageStorage';
+import { useAuthManager } from '@/AuthManager';
+import { ImageStorage, imageStorageKey } from '@/ImageStorage';
 import { useAlert } from '@/alert';
 import BoardEditor from '@/components/BoardEditor.vue';
 import { useHttp, type BoardData } from '@/http';
@@ -8,29 +9,37 @@ import { BoardView } from '@/model/BoardView';
 import sleep from '@/utils/sleep';
 import { faWarning } from '@fortawesome/free-solid-svg-icons';
 import { AxiosError } from 'axios';
-import { inject, onBeforeUnmount, onMounted, shallowRef } from 'vue';
-import { useRoute } from 'vue-router';
+import { onBeforeUnmount, onMounted, provide, shallowRef } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 const loading = useLoading();
 const alert = useAlert();
 const http = useHttp();
 const route = useRoute();
+const router = useRouter();
 const board = shallowRef(null as null | BoardView);
-const imageStorage = inject(imageStorageKey)!;
+const imageStorage = new ImageStorage(http);
+const user = useAuthManager().getUserCache();
 
-function showNotFound() {
-  alert({
+async function showNotFound() {
+  await alert({
     icon: faWarning,
     title: 'Diagram not found',
     body: 'Invalid url or this diagram has been deleted.',
-    button: null,
+    button: 'Go back',
   });
+  if (user.value) {
+    router.push({ name: 'my-boards' });
+  } else {
+    router.push({ name: 'login' });
+  }
 }
 
 function proccessData(board: BoardView, data: BoardData) {
   try {
     board.name = data.name;
     board.editable = data.editable;
+    board.fullAccess = data.full_access;
     for (const note of data.notes) {
       board.newNote(
         parseInt(note.id),
@@ -66,9 +75,10 @@ function proccessData(board: BoardView, data: BoardData) {
 
 async function init(boardId: string) {
   loading();
+  imageStorage.setBoardId(boardId);
   while (true) {
     try {
-      const { data } = await http.board.get(boardId as string);
+      const { data } = await http.board.get(boardId);
       board.value = proccessData(new BoardView(boardId), data);
       loading(false);
       break;
@@ -94,6 +104,7 @@ onMounted(() => {
   }
 });
 
+provide(imageStorageKey, imageStorage);
 onBeforeUnmount(alert);
 </script>
 

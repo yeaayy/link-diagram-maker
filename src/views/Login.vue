@@ -1,35 +1,29 @@
 <script setup lang="ts">
+import { useAuthManager } from '@/AuthManager';
 import MyInput from '@/components/MyInput.vue';
 import { useHttp } from '@/http';
 import { useLoading } from '@/loading';
-import { useUserData } from '@/userdata';
 import { useVuelidate } from '@vuelidate/core';
 import { helpers, required } from '@vuelidate/validators';
 import { AxiosError } from 'axios';
-import { computed, reactive, ref, watch, watchEffect } from 'vue';
-import { RouterLink, useRouter } from 'vue-router';
+import { computed, reactive, ref } from 'vue';
 
 const loading = useLoading();
-const router = useRouter();
 
 const http = useHttp();
-const userData = useUserData();
+const authManager = useAuthManager();
 const data = reactive({
-  username: '',
+  auth: '',
   password: '',
 });
 
-watchEffect(() => {
-  if (userData.value.username !== null) {
-    router.push({ name: 'my-boards' });
-  }
-});
+authManager.redirectIntended();
 
 const extern = ref<Partial<typeof data>>({});
 const v = useVuelidate(computed(() => {
   return {
-    username: {
-      required: helpers.withMessage('Username can\'t be empty', required),
+    auth: {
+      required: helpers.withMessage('Please enter your username or email here', required),
     },
     password: {
       required: helpers.withMessage('Password can\'t be empty', required),
@@ -47,10 +41,9 @@ async function register(e: Event) {
   if (!result) return false;
   clear();
 
-  http.auth.login(data.username, data.password).then(({ data: result }) => {
-    if (result.success) {
-      userData.value.username = data.username;
-    }
+  loading(true);
+  http.auth.login(data.auth, data.password).then(() => {
+    authManager.refresh();
   }).catch(e => {
     if (e instanceof AxiosError) {
       if (e.status === 403) {
@@ -67,7 +60,7 @@ async function register(e: Event) {
     <h3>LOGIN</h3>
     <form @submit="register">
       <div class="row">
-        <MyInput type="text" name="username" label="Username" :validate="v.username" v-model="data.username" @input="clear" required/>
+        <MyInput type="text" name="auth" label="Username or email" :validate="v.auth" v-model="data.auth" @input="clear" required/>
       </div>
 
       <div class="row">

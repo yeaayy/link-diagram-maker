@@ -28,7 +28,9 @@ watchEffect(() => {
 function resolve() {
   if (!pendingResolve) return;
 
-  modalDialog.value!.hide();
+  if (modalDialog.value!.isShowing()) {
+    modalDialog.value!.hide();
+  }
   pendingResolve();
   pendingResolve = null;
 }
@@ -51,8 +53,10 @@ defineExpose({
 </script>
 
 <template>
-  <ModalDialog ref="modalDialog" @close="resolve()">
-    {{ body }}
+  <ModalDialog ref="modalDialog" @cancel="resolve()">
+    <slot>
+      {{ body }}
+    </slot>
 
     <template #title>
       <FontAwesomeIcon v-if="icon" :icon="icon" />

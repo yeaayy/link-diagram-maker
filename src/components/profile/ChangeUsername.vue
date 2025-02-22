@@ -1,23 +1,29 @@
 <script setup lang="ts">
+import { useAuthManager } from '@/AuthManager';
 import { useAlert } from '@/alert';
 import { useHttp } from '@/http';
 import { useLoading } from '@/loading';
-import { useUserData } from '@/userdata';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import useVuelidate from '@vuelidate/core';
 import { helpers, maxLength, minLength } from '@vuelidate/validators';
 import { AxiosError } from 'axios';
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, watchEffect } from 'vue';
 import MyInput from '../MyInput.vue';
 
-const userData = useUserData();
+const user = useAuthManager().getUser();
 const http = useHttp();
 const alert = useAlert();
 const loading = useLoading();
 
 const data = reactive({
-  username: userData.value.username!,
+  username: '',
 });
+
+watchEffect(() => {
+  if (user.value) {
+    data.username = user.value.username;
+  }
+})
 
 const extern = ref<Partial<typeof data>>({});
 const v = useVuelidate(computed(() => {
@@ -44,7 +50,7 @@ async function changeUsername(e: Event) {
         title: 'Username changed',
         body: `Username changed to "${data.username}"`,
       });
-      userData.value.username = data.username;
+      user.value!.username = data.username;
     }
   } catch(e: unknown) {
     if (e instanceof AxiosError) {

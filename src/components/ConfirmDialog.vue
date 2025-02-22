@@ -35,7 +35,9 @@ function resolvePositive() {
 
 function resolveNegative() {
   if (!pendingResolve) return;
-  modalDialog.value!.hide();
+  if (modalDialog.value!.isShowing()) {
+    modalDialog.value!.hide();
+  }
   pendingResolve!(false);
   pendingResolve = null;
 }
@@ -58,7 +60,7 @@ defineExpose({
 </script>
 
 <template>
-  <ModalDialog ref="modalDialog" @close="resolveNegative">
+  <ModalDialog ref="modalDialog" @cancel="resolveNegative">
     {{ body }}
 
     <template #title>

@@ -1,10 +1,7 @@
-import { faCircleInfo } from "@fortawesome/free-solid-svg-icons";
 import axios, { AxiosError } from "axios";
 import { inject, type InjectionKey } from "vue";
-import type { Router } from "vue-router";
-import type { Alert } from "./alert";
 import type { ConnectionSnapshotAction, NoteSnapshotAction } from "./snapshot/Snapshot";
-import { useUserData } from "./userdata";
+import TypedEventListener from "./utils/TypedEventListener";
 
 type DispatchAction = {
   success: boolean;
@@ -16,9 +13,19 @@ type BoardUpdateData = {
   conn: ConnectionSnapshotAction[];
 }
 
+export type BoardAccessResponse = {
+  public: 'no' | 'ro' | 'rw';
+  others: {
+    name: string;
+    username: string;
+    write: boolean;
+  }[];
+}
+
 export type BoardData = {
   name: string,
   editable: boolean,
+  full_access: boolean,
   notes: {
     id: string,
     x: string,
@@ -37,13 +44,21 @@ export type BoardData = {
   }[],
 };
 
+export type UserDataResponse = {
+  login: true;
+  name: string;
+  username: string;
+  email_login: boolean;
+  emails: string[];
+}
+
+export type GetUserResponse = { login: true } & UserDataResponse | { login: false };
+
 export class HttpClient {
   private instance;
+  public readonly forbiden = new TypedEventListener<AxiosError>();
 
-  constructor(
-    private readonly router: Router,
-    private readonly alert: Alert,
-  ) {
+  constructor() {
     this.instance = axios.create({
       baseURL: import.meta.env.VITE_API_BASE,
       headers: {
@@ -56,16 +71,7 @@ export class HttpClient {
     }, (error) => {
       if (error instanceof AxiosError) {
         if (error.status === 401) {
-          if (this.router.currentRoute.value.name !== 'login') {
-            this.alert({
-              icon: faCircleInfo,
-              title: 'Session expired',
-              body: 'Your session has been expired, please login to continue.',
-              local: false,
-            });
-            useUserData().value.username = null
-            this.router.push({ name: 'login' });
-          }
+          this.forbiden.emit(error);
         }
       }
       return Promise.reject(error);
@@ -84,6 +90,8 @@ export class HttpClient {
         result: {
           id: string;
           name: string;
+          owner: string;
+          write_access: boolean | null;
         }[];
       }>('board/all.php');
     },
@@ -114,12 +122,52 @@ export class HttpClient {
         name: newName,
         id: boardId,
       })
+    },
+
+    getAccess: (boardId: string) => {
+      return this.instance.get<BoardAccessResponse>('board/get_access.php', {
+        params: { id: boardId },
+      });
+    },
+
+    findUser: (boardId: string, query: string) => {
+      return this.instance.post<DispatchAction & {
+        result: {
+          name: string;
+          username: string;
+        }[];
+      }>('board/find.php', {
+        id: boardId,
+        q: query,
+      });
+    },
+
+    setAccess: (boardId: string, username: string, write: boolean) => {
+      return this.instance.post<DispatchAction>('board/set_access.php', {
+        id: boardId,
+        username,
+        write,
+      });
+    },
+
+    removeAccess: (boardId: string, username: string) => {
+      return this.instance.post<DispatchAction>('board/remove_access.php', {
+        id: boardId,
+        username,
+      });
+    },
+
+    setPublicAccess: (boardId: string, access: 'no' | 'ro' | 'rw') => {
+      return this.instance.post<DispatchAction>('board/set_public_access.php', {
+        id: boardId,
+        access,
+      })
     }
   }
 
   readonly auth = {
-    login: (username: string, password: string) => {
-      return this.instance.post<DispatchAction>('login.php', { username, password });
+    login: (auth: string, password: string) => {
+      return this.instance.post<DispatchAction>('login.php', { auth, password });
     },
 
     logout: () => {
@@ -131,9 +179,7 @@ export class HttpClient {
     },
 
     getUser: () => {
-      return this.instance.get<{
-        username: string | null;
-      }>('user.php');
+      return this.instance.get<GetUserResponse>('user.php');
     },
 
     setUsername: (username: string) => {
@@ -159,27 +205,34 @@ export class HttpClient {
   }
 
   readonly img = {
-    upload: (file: File) => {
+    upload: (boardId: string, file: File) => {
       const formData = new FormData();
       formData.append('image', file);
       return this.instance.post<{
+        success: true;
         id: string;
         path: string;
         name: string;
+      } | {
+        success: false;
       }>('img/upload.php', formData, {
+        params: {
+          id: boardId,
+        },
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
     },
 
-    delete: (id: any) => {
+    delete: (boardId: string, id: any) => {
       return this.instance.post<DispatchAction>('img/delete.php', {
+        id: boardId,
         img: id,
       });
     },
 
-    get: () => {
+    get: (boardId: string) => {
       return this.instance.get<DispatchAction & {
         result: {
           id: any;
@@ -187,7 +240,9 @@ export class HttpClient {
           path: string;
           hash: string;
         }[],
-      }>('img/get.php');
+      }>('img/get.php', {
+        params: { id: boardId },
+      });
     }
   }
 

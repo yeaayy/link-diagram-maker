@@ -73,6 +73,23 @@ function vis_number(string $msg = null) {
   };
 }
 
+function vin_enum(array $enum, string $msg = null) {
+  return function ($input) use ($enum, $msg) {
+    foreach ($enum as $v) {
+      if ($v === $input) {
+        return [
+          'error' => false,
+          'stop' => false,
+        ];
+      }
+    }
+    return [
+      'error' => true,
+      'msg' => $msg ?? 'invalid value of %name%',
+    ];
+  };
+}
+
 function required(string $msg = null) {
   return function ($input) use ($msg) {
     if ($input === null) {
@@ -232,4 +249,17 @@ function require_user()
     exit;
   }
   $user_id = $_SESSION['user_id'];
+}
+
+function optional_user()
+{
+  global $user_id;
+  if (!empty($user_id)) {
+    return;
+  }
+  if (key_exists('user_id', $_SESSION)) {
+    $user_id = $_SESSION['user_id'];
+  } else {
+    $user_id = 0;
+  }
 }

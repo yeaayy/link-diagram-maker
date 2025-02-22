@@ -1,24 +1,29 @@
 <script setup lang="ts">
 import { useAlert } from '@/alert';
+import BoardAccess from '@/components/BoardAccess.vue';
 import BoardItem from '@/components/BoardItem.vue';
 import Navbar from '@/components/Navbar.vue';
 import { useHttp } from '@/http';
 import { useLoading } from '@/loading';
-import sleep from '@/utils/sleep';
 import { faFileAlt, faPlus, faWarning } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { onMounted, shallowRef, triggerRef } from 'vue';
+import { computed, onMounted, ref, shallowRef, triggerRef } from 'vue';
 import { useRouter } from 'vue-router';
 
 type BoardData = {
   name: string,
   id: string,
+  owner: string | null,
+  writeAccess: boolean | null,
 }
 
 const loading = useLoading();
 const http = useHttp();
 const router = useRouter();
 const boards = shallowRef([] as BoardData[]);
+const myBoards = computed(() => boards.value.filter(board => board.owner === null));
+const sharedBoards = computed(() => boards.value.filter(board => board.owner !== null));
+const editAccess = ref(null as string | null);
 const alert = useAlert();
 let initialized = false;
 
@@ -29,7 +34,14 @@ function init() {
   loading(true);
   http.board.getAll().then(({ data }) => {
     if (data.success) {
-      boards.value = data.result;
+      boards.value = data.result.map(board => {
+        return {
+          id: board.id,
+          name: board.name,
+          owner: board.owner,
+          writeAccess: board.write_access,
+        }
+      });
     }
   }).catch(() => {})
   .finally(() => loading(false));
@@ -80,11 +92,13 @@ async function onCopy(id: string) {
   try {
     const { data } = await http.board.copy(id);
     if (data.success) {
-      boards.value.push({
+      myBoards.value.push({
         id: data.id,
         name: data.name,
+        owner: null,
+        writeAccess: null,
       });
-      triggerRef(boards);
+      triggerRef(myBoards);
     }
   } catch(e) {
     handleError(e, 'Failed to copy');
@@ -110,6 +124,14 @@ async function onRename(id: string, newName: string) {
   loading(false);
 }
 
+function onCopyLink(id: string) {
+  // 
+}
+
+function onShare(id: string) {
+  editAccess.value = id;
+}
+
 onMounted(init);
 </script>
 
@@ -126,8 +148,41 @@ onMounted(init);
     </button>
 
     <div class="row">
-      <BoardItem v-for="board of boards" :key="board.id" :name="board.name" :id="board.id" @delete="onDelete" @copy="onCopy" @rename="onRename" />
+      <BoardItem
+        v-for="board of myBoards"
+        :key="board.id"
+        :name="board.name"
+        :id="board.id"
+        @delete="onDelete"
+        @copy="onCopy"
+        @rename="onRename"
+        @copy-link="onCopyLink"
+        @share="onShare"
+      />
     </div>
+
+    <template v-if="sharedBoards.length > 0">
+      <h3>
+        <FontAwesomeIcon :icon="faFileAlt" />
+        SHARED DIAGRAMS
+      </h3>
+      <div class="row">
+        <BoardItem
+          v-for="board of sharedBoards"
+          :key="board.id"
+          :name="board.name"
+          :id="board.id"
+          :owner="board.owner"
+          :write-access="board.writeAccess"
+          @delete="onDelete"
+          @copy="onCopy"
+          @rename="onRename"
+          @copy-link="onCopyLink"
+        />
+      </div>
+    </template>
+
+    <BoardAccess v-if="editAccess" :board-id="editAccess" @close="editAccess = null" />
   </div>
 </template>
 

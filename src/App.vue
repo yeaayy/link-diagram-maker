@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { confirmDialogKey, type ConfirmDialogData } from '@/confirm';
 import { loadingKey } from '@/loading';
-import { provide, ref, shallowRef, type ComponentInstance } from 'vue';
+import { provide, ref, shallowRef, type ComponentInstance, onMounted, onBeforeUnmount } from 'vue';
 import { RouterView, useRouter } from 'vue-router';
+import { AuthManager, authManagerKey } from './AuthManager';
 import { ImageStorage, imageStorageKey } from './ImageStorage';
 import { alertDialogKey, type AlertDialogData } from './alert';
 import AlertDialog from './components/AlertDialog.vue';
@@ -10,19 +11,21 @@ import ConfirmDialog from './components/ConfirmDialog.vue';
 import PromptDialog from './components/PromptDialog.vue';
 import { HttpClient, httpKey } from './http';
 import { promptDialogKey, type PromptDialogData } from './prompt';
-import { initUserData } from './userdata';
 
 const router = useRouter();
 const isLoading = ref(false);
-const http = new HttpClient(router, showAlert);
+const http = new HttpClient();
 const confirmDialog = shallowRef(null! as ComponentInstance<typeof ConfirmDialog>);
 const promptDialog = shallowRef(null! as ComponentInstance<typeof PromptDialog>);
 const alertDialog = shallowRef(null! as ComponentInstance<typeof AlertDialog>);
 const confirmDialogData = shallowRef<ConfirmDialogData>({});
 const promptDialogData = shallowRef<PromptDialogData>({});
 const alertDialogData = shallowRef<AlertDialogData>({});
+const userManager = new AuthManager(http, router, showAlert);
 
-initUserData(http);
+function onForbiden() {
+  userManager.getUser().value = null;
+}
 
 function setLoading(loading = true) {
   isLoading.value = loading;
@@ -83,10 +86,18 @@ router.beforeEach((to, from, next) => {
 
 provide(loadingKey, setLoading);
 provide(httpKey, http);
-provide(imageStorageKey, new ImageStorage(http));
 provide(confirmDialogKey, showConfirm);
 provide(promptDialogKey, showPrompt);
 provide(alertDialogKey, showAlert);
+provide(authManagerKey, userManager);
+
+onMounted(() => {
+  http.forbiden.listen(onForbiden);
+});
+
+onBeforeUnmount(() => {
+  http.forbiden.remove(onForbiden);
+})
 </script>
 
 <template>

@@ -62,3 +62,18 @@ function generate_random(int $len)
   }
   return join('', $result);
 }
+
+function json_result($data, $code = 200, $exit = true) {
+  http_response_code($code);
+  header('Content-Type: application/json');
+  echo json_encode($data) . "\n";
+  if ($exit) {
+    exit;
+  }
+}
+
+function not_found($msg) {
+  json_result([
+    'error' => $msg,
+  ], 404);
+}

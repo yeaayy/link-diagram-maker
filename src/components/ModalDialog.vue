@@ -1,23 +1,25 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import keyboard from '@/utils/keyboard';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 
 const prop = withDefaults(defineProps<{
   show?: boolean;
+  cancelable?: boolean;
 }>(), {
   show: false,
+  cancelable: true,
 });
 
 const emit = defineEmits<{
+  cancel: [],
   close: [],
 }>()
 const show = ref(prop.show);
 
-function onKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape') {
-    e.preventDefault();
-    e.stopPropagation();
-    emit('close');
-  }
+function cancel() {
+  if (!prop.cancelable) return;
+  show.value = false;
+  emit('cancel');
 }
 
 defineExpose({
@@ -26,17 +28,32 @@ defineExpose({
   },
   hide() {
     show.value = false;
+    emit('close');
   },
   toggle() {
     show.value = !show.value;
-  }
+    if (!show.value) {
+      emit('close');
+    }
+  },
+  isShowing() {
+    return show.value;
+  },
+})
+
+onMounted(() => {
+  keyboard.addShortcut('escape', cancel);
+});
+
+onBeforeUnmount(() => {
+  keyboard.removeShortcut('escape', cancel);
 })
 </script>
 
 <template>
-  <Teleport to="body">
+  <Teleport to="body" v-if="show">
     <Transition>
-      <div class="backdrop" v-if="show" @keydown="onKeydown">
+      <div class="backdrop" @click.self.stop="cancel" v-bind="$attrs">
         <div class="modal">
           <div class="title">
             <slot name="title"></slot>
@@ -62,15 +79,16 @@ defineExpose({
   bottom: 0px;
   display: flex;
   background-color: #00000080;
-  z-index: 999;
-  --modal-width: 100%;
+  overflow-y: auto;
+  z-index: 99;
+  --modal-width: calc(100% - 1rem);
   --modal-bg: var(--white);
   --modal-border: 1px solid var(--black);
   --modal-title-size: 1.5rem;
   --modal-rounded-radius: 0.5rem;
 }
 
-@media (min-width: 576px) {
+@media (min-width: 21rem) {
   .backdrop {
   --modal-width: 20rem;
   }
@@ -91,6 +109,7 @@ defineExpose({
   &>.title {
     border-bottom: var(--modal-border);
     font-size: var(--modal-title-size);
+    display: flex;
   }
 
   &>.footer {

@@ -3,7 +3,6 @@ import { useAlert } from '@/alert';
 import { useConfirm } from '@/confirm';
 import { useHttp } from '@/http';
 import { useLoading } from '@/loading';
-import { useUserData } from '@/userdata';
 import { faInfoCircle, faWarning } from '@fortawesome/free-solid-svg-icons';
 import useVuelidate from '@vuelidate/core';
 import { helpers, required } from '@vuelidate/validators';
@@ -15,7 +14,6 @@ const http = useHttp();
 const alert = useAlert();
 const confirm = useConfirm();
 const loading = useLoading();
-const userData = useUserData();
 
 const data = reactive({
   password: '',
@@ -77,7 +75,7 @@ async function confirmDeleteAccount(token: string) {
         body: 'Your account has been deleted.',
         local: false,
       });
-      userData.value.username = null;
+      // userData.value.username = null;
       return;
     }
   } catch(e: unknown) {}

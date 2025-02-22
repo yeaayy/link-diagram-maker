@@ -24,10 +24,22 @@ export class ImageStorage {
   private images = shallowRef([] as StoredImage[]);
   private map = new Map<string, StoredImage>();
   private fetched = false;
+  private boardId: string | null = null;
 
   constructor(
     private http: HttpClient,
   ) {}
+
+  public setBoardId(boardId: string) {
+    this.boardId = boardId;
+  }
+
+  public getBoardId() {
+    if (!this.boardId) {
+      throw new Error('Board id is not provided');
+    }
+    return this.boardId;
+  }
 
   public add(path: string) {
     const result = new StoredImage(path);
@@ -62,7 +74,7 @@ export class ImageStorage {
     }
     while (true) {
       try {
-        const { data } = await this.http.img.get();
+        const { data } = await this.http.img.get(this.getBoardId());
         for (const item of data.result) {
           const img = this.getOrAdd(item.path, item.id);
           img.name = item.name;
@@ -95,7 +107,11 @@ export class ImageStorage {
 
     while (true) {
       try {
-        const { data } = await this.http.img.upload(file);
+        const { data } = await this.http.img.upload(this.getBoardId(), file);
+        if (!data.success) {
+          // TODO: Return a proper value.
+          return null!;
+        }
         const result = this.getOrAdd(data.path, parseInt(data.id));
         result.name = data.name;
         result.hash = hash;
@@ -110,7 +126,7 @@ export class ImageStorage {
   public async delete(img: StoredImage): Promise<boolean> {
     while (true) {
       try {
-        const { data } = await this.http.img.delete(img.id);
+        const { data } = await this.http.img.delete(this.getBoardId(), img.id);
         if (data.success) {
           img.destroy();
         }

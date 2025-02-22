@@ -7,12 +7,14 @@ import type ActionHistory from '@/snapshot/ActionHistory';
 import { Snapshot, type ConnectionSnapshotAction, type NoteSnapshotAction } from '@/snapshot/Snapshot';
 import keyboard from '@/utils/keyboard';
 import sleep from '@/utils/sleep';
-import { faArrowCircleLeft, faArrowRotateLeft, faArrowRotateRight, faCirclePlus, faHome, faImage, faPlusCircle, faSave, faWarning } from '@fortawesome/free-solid-svg-icons';
+import { faArrowCircleLeft, faArrowRotateLeft, faArrowRotateRight, faCirclePlus, faHome, faImage, faPlusCircle, faSave, faShareAlt, faWarning } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { AxiosError } from 'axios';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import BoardAccess from './BoardAccess.vue';
 import ClickToEdit from './ClickToEdit.vue';
+import MyButton from './MyButton.vue';
 import ThemeSelector from './ThemeSelector.vue';
 
 const prop = defineProps<{
@@ -38,6 +40,7 @@ const redoName = ref(undefined as undefined | string);
 const router = useRouter();
 const alert = useAlert();
 const snapshot = new Snapshot(prop.board.id);
+const showBoardAccess = ref(false);
 
 if (import.meta.env.DEV) {
   (window as any).snapshot = snapshot;
@@ -130,7 +133,7 @@ function gotoMyBoards() {
       return;
     }
   }
-  router.push({ name: 'my-boards' });
+  router.push({ name: 'login' });
 }
 
 onMounted(() => {
@@ -161,7 +164,11 @@ onBeforeUnmount(() => {
     <div class="title">
       <FontAwesomeIcon class="icon enable" :icon="faArrowCircleLeft" @click="gotoMyBoards" title="Back to my boards" />
       <ClickToEdit max-length="255" :read-only="!prop.board.editable" v-model="boardName" @finish="renameBoard" />
-      <div class="theme-selector">
+      <div class="right">
+        <MyButton class="sharing-option" v-if="board.fullAccess" color="blue" @click="showBoardAccess = true">
+          <FontAwesomeIcon :icon="faShareAlt" />
+          Sharing Option
+        </MyButton>
         <ThemeSelector />
       </div>
     </div>
@@ -184,6 +191,8 @@ onBeforeUnmount(() => {
       <FontAwesomeIcon :class="{icon: true, enable: undoName !== undefined}" :icon="faArrowRotateLeft" @click="onUndo" :title="'Undo ' + (undoName || '') + ' (CTRL+Z)'" />
       <FontAwesomeIcon :class="{icon: true, enable: redoName !== undefined}" :icon="faArrowRotateRight" @click="onRedo" :title="'Redo ' + (redoName || '') + ' (CTRL+SHIFT+Z)'" />
     </div>
+
+    <BoardAccess v-if="showBoardAccess" :board-id="board.id" @close="showBoardAccess = false" />
   </div>
 </template>
 
@@ -227,8 +236,6 @@ onBeforeUnmount(() => {
   position: absolute;
   font-size: 0.65em;
   filter: invert(1);
-  /* text-shadow: 0px 2px white; */
-  /* box-shadow: 0px ; */
   background-color: var(--white);
   box-shadow: 0px 0px 2px var(--white);
   border-radius: 999px;
@@ -236,7 +243,12 @@ onBeforeUnmount(() => {
   right: 0px;
 }
 
-.theme-selector {
+.right {
   margin-left: auto;
+  display: flex;
+}
+
+.sharing-option {
+  margin-right: 0.5rem;
 }
 </style>

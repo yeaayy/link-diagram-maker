@@ -2,26 +2,41 @@
 require_once __DIR__ . '/../common/session.php';
 require_method_post();
 
+if (key_exists('user_id', $_SESSION)) {
+  echo json_encode([
+    'success' => true,
+  ]);
+  exit;
+}
+
 $data = validate_request([
-  'username' => [required(), vis_string()],
+  'auth' => [required(), vis_string()],
   'password' => [required(), vis_string()],
 ]);
-$username = $data['username'];
+$auth = $data['auth'];
 $password = $data['password'];
 
 function incorrect() {
   echo json_encode([
     'error' => [
-      'password' => 'Username or password incorrect',
+      'password' => 'Unknown user or incorrect password',
     ],
   ]);
   http_response_code(403);
   exit;
 }
 
-$s = use_db()->prepare('SELECT id, password FROM `users` WHERE username = :username');
+$s = use_db()->prepare(
+  'SELECT `id`, `name`, `username`, `password`, `email_login`
+  FROM `users`
+  WHERE `username` = :auth
+  UNION SELECT u.`id`, `name`, `username`, `password`, `email_login`
+  FROM `emails` AS e
+  JOIN `users` as u ON e.`user_id` = u.`id` AND u.`email_login` = TRUE
+  WHERE `email` = :auth'
+);
 $s->execute([
-  'username' => $username,
+  'auth' => $auth,
 ]);
 $row = $s->fetch();
 if (!$row) {
@@ -33,6 +48,9 @@ if (!password_verify($password, $row['password'])) {
 }
 
 $_SESSION['user_id'] = $row['id'];
+$_SESSION['name'] = $row['name'];
+$_SESSION['username'] = $row['username'];
+$_SESSION['email_login'] = $row['email_login'];
 
 echo json_encode([
   'success' => true,

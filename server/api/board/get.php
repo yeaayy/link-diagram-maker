@@ -1,25 +1,37 @@
 <?php
 require_once __DIR__ . '/../../common/session.php';
 require_method_get();
+optional_user();
 
 $data = validate_request([
-  'id' => [required(), vis_string(), vis_hex()],
+  'id' => [required(), vis_string()],
 ]);
 
+if (vis_hex()($data['id'])['error']) {
+  not_found('Board not found');
+}
+
 $db = use_db();
-$s = $db->prepare('SELECT id, owner, name FROM `boards` AS b WHERE b.uid = :uid');
+$s = $db->prepare(
+  'SELECT b.id, owner, name, public_access, write_access
+  FROM `boards` AS b
+  LEFT JOIN `access` AS a ON a.board_id = b.id
+  WHERE
+    b.uid = :uid AND
+    (b.public_access != \'no\' OR owner = :user OR a.user_id = :user)
+  LIMIT 1'
+);
 $s->execute([
   'uid' => hex2bin($data['id']),
+  'user' => $user_id,
 ]);
 
 $row = $s->fetch();
 if (empty($row)) {
-  http_response_code(404);
-  echo json_encode([
-    'error' => 'Board not found',
-  ]);
-  exit;
+  not_found('Board not found');
 }
+
+$editable = $row['owner'] === $user_id || $row['public_access'] === 'rw' || $row['write_access'];
 
 $name = $row['name'];
 $board_owner = $row['owner'];
@@ -64,14 +76,10 @@ while ($row = $s->fetch()) {
   ]);
 }
 
-$editable = false;
-if (key_exists('user_id', $_SESSION)) {
-  $editable = $board_owner == $_SESSION['user_id'];
-}
-
-echo json_encode([
+json_result([
   'name' => $name,
   'editable' => $editable,
+  'full_access' => $board_owner == $user_id,
   'notes' => $notes,
   'conns' => $conns,
 ]);

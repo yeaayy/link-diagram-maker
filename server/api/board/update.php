@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../common/session.php';
 require_method_post();
-require_user();
+optional_user();
 
 if (!key_exists('CONTENT_TYPE', $_SERVER) || $_SERVER['CONTENT_TYPE'] !== 'application/json') {
   echo json_encode([
@@ -12,27 +12,27 @@ if (!key_exists('CONTENT_TYPE', $_SERVER) || $_SERVER['CONTENT_TYPE'] !== 'appli
 
 $json = json_decode(file_get_contents('php://input'), true);
 if (json_last_error() !== JSON_ERROR_NONE) {
-  http_response_code(400);
-  echo json_encode([
+  json_result([
     'error' => 'Malformed input',
-  ]);
-  exit;
+  ], 400);
 }
 
 function invalid_format() {
-  http_response_code(409);
-  echo json_encode([
+  json_result([
     'error' => 'Invalid input format',
-  ]);
-  exit;
+  ], 409);
 }
 
 // Validate only.
 validate($json, [
-  'id' => [required(), vis_string(), vis_hex()],
+  'id' => [required(), vis_string()],
   'conn' => [required()],
   'note' => [required()],
 ]);
+
+if (vis_hex()($json['id'])['error']) {
+  not_found('Board not found');
+}
 
 $board_uuid = $json['id'];
 $db = use_db();
@@ -111,18 +111,16 @@ define('TYPE_EDIT', 1);
 define('TYPE_DELETE', 2);
 
 try {
-  $s = $db->prepare('SELECT id FROM `boards` WHERE uid = :uuid AND owner = :user_id');
+  $s = $db->prepare('SELECT b.id FROM `boards` AS b LEFT JOIN `access` AS a ON a.board_id = b.id WHERE uid = :uuid AND (owner = :user_id OR public_access = \'rw\' OR a.user_id = :user_id AND a.write_access IS TRUE) LIMIT 1');
   $s->execute([
     'uuid' => hex2bin($board_uuid),
     'user_id' => $user_id,
   ]);
   $row = $s->fetch();
   if (!$row) {
-    http_response_code(401);
-    echo json_encode([
-      'error' => 'Edit not allowed',
-    ]);
-    exit;
+    json_result([
+      'error' => 'Board not found',
+    ], 404);
   }
   $board_id = $row['id'];
 
@@ -215,11 +213,9 @@ try {
   ]);
   if ($check->fetch()['count'] != 0) {
     $db->rollBack();
-    http_response_code(409);
-    echo json_encode([
+    json_result([
       'error' => 'Invalid result, rejected',
-    ]);
-    exit;
+    ], 409);
   }
 
   $db->commit();
@@ -227,11 +223,12 @@ try {
     'ok' => true,
   ]);
 } catch(Exception $e) {
-  $db->rollBack();
-  http_response_code(409);
-  echo json_encode([
+  if ($db->inTransaction()) {
+    $db->rollBack();
+  }
+  json_result([
     'error' => 'Run failed',
-  ]);
+  ], 409, false);
   throw $e;
 }
 

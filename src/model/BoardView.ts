@@ -16,6 +16,7 @@ export class BoardView {
   public defaultSize = 5;
   public defaultDash: number[] = [];
   public editable = false;
+  public fullAccess = false;
   public name = 'Untitled';
 
   public readonly notes: NoteView[] = []
