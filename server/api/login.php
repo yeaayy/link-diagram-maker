@@ -33,7 +33,7 @@ $s = use_db()->prepare(
   UNION SELECT u.`id`, `name`, `username`, `password`, `email_login`
   FROM `emails` AS e
   JOIN `users` as u ON e.`user_id` = u.`id` AND u.`email_login` = TRUE
-  WHERE `email` = :auth'
+  WHERE `email` = :auth AND u.email_login = 1'
 );
 $s->execute([
   'auth' => $auth,

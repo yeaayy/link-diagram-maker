@@ -23,26 +23,29 @@ button {
   padding: 0.5rem;
   font-weight: bold;
   border: none;
+  background: var(--button-color);
+
+  &:disabled {
+    filter: grayscale();
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--button-hover);
+  }
 }
 
 button.blue {
-  background: #2875cd;
-  &:hover {
-    background: #93c5fd;
-  }
+  --button-color: #2875cd;
+  --button-hover: #93c5fd;
 }
 
 button.green {
-  background-color: #059669;
-  &:hover {
-    background-color: #10b981;
-  }
+  --button-color: #059669;
+  --button-hover: #10b981;
 }
 
 button.red {
-  background-color: #ff0000;
-  &:hover {
-    background-color: #ff0000;
-  }
+  --button-color: #dd2f2f;
+  --button-hover: #de5454;
 }
 </style>

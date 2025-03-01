@@ -44,13 +44,16 @@ export type BoardData = {
   }[],
 };
 
-export type UserDataResponse = {
-  login: true;
+export type UserData = {
   name: string;
   username: string;
   email_login: boolean;
-  emails: string[];
 }
+
+export type UserDataResponse = {
+  login: true;
+  emails: string[];
+} & UserData
 
 export type GetUserResponse = { login: true } & UserDataResponse | { login: false };
 
@@ -174,16 +177,16 @@ export class HttpClient {
       return this.instance.post<DispatchAction>('logout.php');
     },
 
-    register: (username: string, password: string) => {
-      return this.instance.post<DispatchAction>('register.php', { username, password });
+    register: (name: string, username: string, password: string) => {
+      return this.instance.post('user/register.php', { name, username, password });
     },
 
     getUser: () => {
       return this.instance.get<GetUserResponse>('user.php');
     },
 
-    setUsername: (username: string) => {
-      return this.instance.post<DispatchAction>('change_username.php', { username });
+    updateUserdata: (data: Partial<UserData>) => {
+      return this.instance.post<DispatchAction>('user/update.php', data);
     },
 
     setPassword: (oldPassword: string, newPassword: string) => {
@@ -201,6 +204,14 @@ export class HttpClient {
 
     confirmDeleteAccount: (token: string) => {
       return this.instance.post<DispatchAction>('confirm_delete_account.php', { token });
+    },
+
+    getName: () => {
+      return this.instance.get<{ name: string | null }>('user/get_name.php');
+    },
+
+    removeEmail: (email: string) => {
+      return this.instance.post<DispatchAction>('user/remove_email.php', { email });
     },
   }
 

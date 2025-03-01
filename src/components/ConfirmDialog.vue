@@ -61,7 +61,9 @@ defineExpose({
 
 <template>
   <ModalDialog ref="modalDialog" @cancel="resolveNegative">
-    {{ body }}
+    <slot>
+      {{ body }}
+    </slot>
 
     <template #title>
       <FontAwesomeIcon v-if="icon" :icon="icon" />

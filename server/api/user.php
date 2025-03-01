@@ -21,7 +21,7 @@ if (key_exists('user_id', $_SESSION)) {
       'login' => true,
       'name' => $row['name'],
       'username' => $row['username'],
-      'email_login' => $row['email_login'],
+      'email_login' => !!$row['email_login'],
       'emails' => $emails,
     ]);
     exit;

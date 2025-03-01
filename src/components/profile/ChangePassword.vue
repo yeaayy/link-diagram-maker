@@ -2,11 +2,13 @@
 import { useAlert } from '@/alert';
 import { useHttp } from '@/http';
 import { useLoading } from '@/loading';
-import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle, faPencil } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import useVuelidate from '@vuelidate/core';
 import { helpers, minLength, required, sameAs } from '@vuelidate/validators';
 import { AxiosError } from 'axios';
 import { computed, reactive, ref } from 'vue';
+import MyButton from '../MyButton.vue';
 import MyInput from '../MyInput.vue';
 
 const http = useHttp();
@@ -111,7 +113,10 @@ function clearExtern() {
     </div>
 
     <div class="row">
-      <button>Change Password</button>
+      <MyButton color="blue">
+        <FontAwesomeIcon :icon="faPencil" />
+        Change Password
+      </MyButton>
     </div>
   </form>
 </template>

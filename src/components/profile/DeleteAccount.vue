@@ -1,16 +1,20 @@
 <script setup lang="ts">
+import { useAuthManager } from '@/AuthManager';
 import { useAlert } from '@/alert';
 import { useConfirm } from '@/confirm';
 import { useHttp } from '@/http';
 import { useLoading } from '@/loading';
-import { faInfoCircle, faWarning } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle, faTrash, faWarning } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import useVuelidate from '@vuelidate/core';
 import { helpers, required } from '@vuelidate/validators';
 import { AxiosError } from 'axios';
 import { computed, reactive, ref } from 'vue';
+import MyButton from '../MyButton.vue';
 import MyInput from '../MyInput.vue';
 
 const http = useHttp();
+const auth = useAuthManager();
 const alert = useAlert();
 const confirm = useConfirm();
 const loading = useLoading();
@@ -75,7 +79,7 @@ async function confirmDeleteAccount(token: string) {
         body: 'Your account has been deleted.',
         local: false,
       });
-      // userData.value.username = null;
+      auth.invalidate();
       return;
     }
   } catch(e: unknown) {}
@@ -101,7 +105,10 @@ async function confirmDeleteAccount(token: string) {
     </div>
 
     <div class="row">
-      <button>Delete Account</button>
+      <MyButton color="red">
+        <FontAwesomeIcon :icon="faTrash" />
+        Delete Account
+      </MyButton>
     </div>
   </form>
 </template>

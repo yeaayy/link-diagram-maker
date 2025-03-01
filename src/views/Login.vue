@@ -3,6 +3,8 @@ import { useAuthManager } from '@/AuthManager';
 import MyInput from '@/components/MyInput.vue';
 import { useHttp } from '@/http';
 import { useLoading } from '@/loading';
+import { faGoogle } from '@fortawesome/free-brands-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { useVuelidate } from '@vuelidate/core';
 import { helpers, required } from '@vuelidate/validators';
 import { AxiosError } from 'axios';
@@ -53,6 +55,10 @@ async function register(e: Event) {
   }).finally(() => loading(false));
   return false;
 }
+
+function loginWithGoogle() {
+  location.href = './oauth/google.php';
+}
 </script>
 
 <template>
@@ -68,6 +74,19 @@ async function register(e: Event) {
       </div>
 
       <button type="submit" class="row">Login</button>
+
+      <div class="or">
+        <div class="line"></div>
+        <div class="text">or</div>
+        <div class="line"></div>
+      </div>
+
+      <div class="row">
+        <div class="w-google" @click="loginWithGoogle()">
+          <FontAwesomeIcon :icon="faGoogle" />
+          Login with Google
+        </div>
+      </div>
     </form>
   </div>
 </template>
@@ -96,6 +115,41 @@ button {
 
   &:hover {
     background-color: #10b981;
+  }
+}
+
+.or {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 0.5rem;
+  &>.text {
+    margin-left: 0.25rem;
+    margin-right: 0.25rem;
+  }
+  &>.line {
+    height: 1px;
+    flex-grow: 1;
+    background-color: #888;
+  }
+}
+
+.w-google {
+  background-color: #db4a39;
+  color: white;
+  padding: 0.5rem 0px;
+  border-radius: 0.25rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #e47f74;
+  }
+
+  &>svg {
+    padding: 0.5rem;
   }
 }
 </style>
