@@ -14,15 +14,14 @@ try {
     'username' => $input['username'],
   ]);
 
-  echo json_encode([
+  json_result([
     'success' => true,
   ]);
 } catch(Exception $e) {
-  http_response_code(409);
-  echo json_encode([
+  json_result([
     'success' => false,
     'error' => [
       'username' => 'Username already been used.',
     ],
-  ]);
+  ], 409);
 }

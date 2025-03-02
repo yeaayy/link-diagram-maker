@@ -14,7 +14,7 @@ $s->execute([
   'id' => $db->lastInsertId(),
 ]);
 
-echo json_encode([
+json_result([
   'success' => true,
   'id' =>  bin2hex($s->fetch()['uid']),
 ]);

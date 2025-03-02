@@ -5,6 +5,6 @@ require_user();
 
 session_destroy();
 
-echo json_encode([
+json_result([
   'success' => true,
 ]);

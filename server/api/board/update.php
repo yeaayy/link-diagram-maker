@@ -4,10 +4,9 @@ require_method_post();
 optional_user();
 
 if (!key_exists('CONTENT_TYPE', $_SERVER) || $_SERVER['CONTENT_TYPE'] !== 'application/json') {
-  echo json_encode([
+  json_result([
     'error' => 'Expecting json input',
-  ]);
-  exit;
+  ], 400);
 }
 
 $json = json_decode(file_get_contents('php://input'), true);
@@ -219,7 +218,7 @@ try {
   }
 
   $db->commit();
-  echo json_encode([
+  json_result([
     'ok' => true,
   ]);
 } catch(Exception $e) {

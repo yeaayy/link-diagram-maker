@@ -18,12 +18,10 @@ $s->execute([
 ]);
 $row = $s->fetch();
 if(!$row) {
-  echo json_encode([
+  json_result([
     'success' => false,
     'msg' => 'Board not found',
-  ]);
-  http_response_code(404);
-  exit;
+  ], 404);
 }
 $src_board_id = $row['id'];
 $new_board_name = $row['name'] . ' - Copy';
@@ -63,7 +61,7 @@ $s->execute([
 ]);
 $new_board_uid = bin2hex($s->fetch()['uid']);
 
-echo json_encode([
+json_result([
   'success' => true,
   'id' =>  $new_board_uid,
   'name' => $new_board_name,

@@ -4,11 +4,9 @@ require_method_post();
 optional_user();
 
 if (!has_file('image')) {
-  echo json_encode([
+  json_result([
     'error' => 'No image provided',
-  ]);
-  http_response_code(400);
-  exit;
+  ], 400);
 }
 
 $input = validate_request([

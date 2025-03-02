@@ -17,17 +17,16 @@ if (key_exists('user_id', $_SESSION)) {
       array_push($emails, $data['email']);
     }
 
-    echo json_encode([
+    json_result([
       'login' => true,
       'name' => $row['name'],
       'username' => $row['username'],
       'email_login' => !!$row['email_login'],
       'emails' => $emails,
     ]);
-    exit;
   }
 }
 
-echo json_encode([
+json_result([
   'login' => false,
 ]);

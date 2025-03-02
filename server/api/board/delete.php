@@ -14,6 +14,6 @@ $s->execute([
   'board_id' => hex2bin($input['id']),
 ]);
 
-echo json_encode([
+json_result([
   'success' => $s->rowCount() == 1,
 ]);

@@ -3,10 +3,9 @@ require_once __DIR__ . '/../common/session.php';
 require_method_post();
 
 if (key_exists('user_id', $_SESSION)) {
-  echo json_encode([
+  json_result([
     'success' => true,
   ]);
-  exit;
 }
 
 $data = validate_request([
@@ -17,13 +16,11 @@ $auth = $data['auth'];
 $password = $data['password'];
 
 function incorrect() {
-  echo json_encode([
+  json_result([
     'error' => [
       'password' => 'Unknown user or incorrect password',
     ],
-  ]);
-  http_response_code(403);
-  exit;
+  ], 403);
 }
 
 $s = use_db()->prepare(
@@ -52,6 +49,6 @@ $_SESSION['name'] = $row['name'];
 $_SESSION['username'] = $row['username'];
 $_SESSION['email_login'] = $row['email_login'];
 
-echo json_encode([
+json_result([
   'success' => true,
 ]);

@@ -14,14 +14,12 @@ $s->execute([
 ]);
 $old_password_hash = $s->fetch()['password'];
 if (!password_verify($input['old_password'], $old_password_hash)) {
-  http_response_code(403);
-  echo json_encode([
+  json_result([
     'success' => false,
     'error' => [
       'old_password' => 'Password incorrect.',
     ],
-  ]);
-  exit;
+  ], 403);
 }
 
 $s = use_db()->prepare('UPDATE `users` SET password = :password WHERE id = :user_id');
@@ -30,6 +28,6 @@ $s->execute([
   'password' => password_hash($input['new_password'], null),
 ]);
 
-echo json_encode([
+json_result([
   'success' => true,
 ]);

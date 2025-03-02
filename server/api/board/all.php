@@ -27,7 +27,7 @@ while ($row = $s->fetch()) {
   ]);
 }
 
-echo json_encode([
+json_result([
   'success' => true,
   'result' => $result,
 ]);

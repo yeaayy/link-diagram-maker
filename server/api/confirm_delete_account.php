@@ -8,24 +8,21 @@ $input = validate_request([
 ]);
 
 if (!key_exists('confirm', $_SESSION)) {
-  http_response_code(403);
-  echo json_encode([
+  json_result([
     'success' => false,
     'error' => [
       'token' => 'Password must be confirmed first.',
     ],
-  ]);
-  exit;
+  ], 403);
 }
 
 if ($_SESSION['confirm'] !== $input['token']) {
-  echo json_encode([
+  json_result([
     'success' => false,
     'error' => [
       'token' => 'Confirmation token doesn\'t match.',
     ],
-  ]);
-  exit;
+  ], 400);
 }
 
 // Delete all images owned by this user.
@@ -46,6 +43,6 @@ $s->execute([
 // Delete session.
 session_destroy();
 
-echo json_encode([
+json_result([
   'success' => true,
 ]);

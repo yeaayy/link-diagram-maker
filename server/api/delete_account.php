@@ -13,20 +13,18 @@ $s->execute([
 ]);
 $password_hash = $s->fetch()['password'];
 if (!password_verify($input['password'], $password_hash)) {
-  http_response_code(403);
-  echo json_encode([
+  json_result([
     'success' => false,
     'error' => [
       'password' => 'Password incorrect.',
     ],
-  ]);
-  exit;
+  ], 403);
 }
 
 $token = generate_random(8);
 $_SESSION['confirm'] = $token;
 
-echo json_encode([
+json_result([
   'success' => true,
   'token' => $token,
 ]);
