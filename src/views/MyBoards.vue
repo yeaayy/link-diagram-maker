@@ -5,6 +5,7 @@ import BoardItem from '@/components/BoardItem.vue';
 import Navbar from '@/components/Navbar.vue';
 import { useHttp } from '@/http';
 import { useLoading } from '@/loading';
+import copyText from '@/utils/copy-text';
 import { faFileAlt, faPlus, faWarning } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { computed, onMounted, ref, shallowRef, triggerRef } from 'vue';
@@ -125,8 +126,9 @@ async function onRename(id: string, newName: string) {
 }
 
 function onCopyLink(id: string) {
-  // 
-}
+  const path = router.resolve({ name: 'board', params: { id }}).fullPath;
+  copyText(`${location.protocol}//${location.host}${path}`);
+} 
 
 function onShare(id: string) {
   editAccess.value = id;

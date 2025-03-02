@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { useHttp } from '@/http';
 import { useLoading } from '@/loading';
-import { faGlobeAsia, faX } from '@fortawesome/free-solid-svg-icons';
+import { faCopy, faGlobeAsia, faX } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { ref, shallowRef, type ComponentInstance } from 'vue';
 import FloatRelative from './FloatRelative.vue';
 import ModalDialog from './ModalDialog.vue';
+import MyButton from './MyButton.vue';
 import SearchUserItem from './SearchUserItem.vue';
 import SelectAccessLevel from './SelectAccessLevel.vue';
 import SelectUserAccess from './SelectUserAccess.vue';
+import copyText from '@/utils/copy-text';
+import { useRouter } from 'vue-router';
 
 const prop = defineProps<{
   boardId: string;
@@ -26,6 +29,7 @@ type UserData = {
 type UserAccessData = UserData & { write: boolean }
 
 const dialog = shallowRef(null as ComponentInstance<typeof ModalDialog> | null);
+const router = useRouter();
 const loading = useLoading();
 const http = useHttp();
 const publicAccess = ref(null as null | boolean);
@@ -110,6 +114,11 @@ async function setPublicAccess(access: boolean | null) {
     }
   } catch(e) {}
 }
+
+function copyLink() {
+  const path = router.resolve({ name: 'board', params: { id: prop.boardId }}).fullPath;
+  copyText(`${location.protocol}//${location.host}${path}`);
+}
 </script>
 
 <template>
@@ -146,6 +155,12 @@ async function setPublicAccess(access: boolean | null) {
       @write-access-changed="setAccess(data, data.write = $event === true)"
       @remove="removeAccess(data.username)"
     />
+
+    <br>
+    <MyButton @click="copyLink">
+      <FontAwesomeIcon :icon="faCopy" />
+      Copy Link
+    </MyButton>
 
     <FloatRelative
       v-if="showSearchResult"
