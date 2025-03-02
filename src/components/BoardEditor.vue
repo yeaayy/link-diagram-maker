@@ -125,8 +125,17 @@ function onWheel(e: WheelEvent) {
 }
 
 function onWindowResize() {
-  board.width = root.value.clientWidth;
-  board.height = root.value.clientHeight;
+  const width = root.value.clientWidth;
+  const height = root.value.clientHeight;
+  if (board.width === 0 && board.height === 0) {
+    board.dx = width / 2;
+    board.dy = height / 2;
+  } else {
+    board.dx += (width - board.width) * board.scale / 2;
+    board.dy += (height - board.height) * board.scale / 2;
+  }
+  board.width = width;
+  board.height = height;
 }
 
 function onPressDelete() {
@@ -241,8 +250,8 @@ function onPreviewConnection(from: HTMLElement, toX: number, toY: number) {
 }
 
 function resetView() {
-  board.dx = 0;
-  board.dy = 0;
+  board.dx = root.value.clientWidth / 2;
+  board.dy = root.value.clientHeight / 2;
   board.scale = 1;
 }
 
