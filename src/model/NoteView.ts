@@ -183,8 +183,8 @@ export class NoteView {
       this.viewContent.classList.add('empty');
     } else {
       this.viewContent.classList.remove('empty');
-      this.viewContent.innerHTML = text;
     }
+    this.viewContent.innerHTML = text;
     this.updatePosition();
 
     if (this.isAttached())
