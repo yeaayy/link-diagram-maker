@@ -16,11 +16,13 @@
 .theme-dark {
   --white: #222325;
   --black: white;
+  --hover-color: #6c80a9;
 }
 
 .theme-light {
   --white: white;
   --black: black;
+  --hover-color: #bfdbfe;
 }
 
 body {

@@ -30,6 +30,7 @@ button {
   }
 
   &:hover:not(:disabled) {
+    cursor: pointer;
     background: var(--button-hover);
   }
 }

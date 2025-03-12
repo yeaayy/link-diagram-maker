@@ -32,7 +32,7 @@ const prop = defineProps<UserData>();
   cursor: pointer;
 
   &:hover {
-    background: #93c5fd;
+    background-color: var(--hover-color);
   }
 }
 

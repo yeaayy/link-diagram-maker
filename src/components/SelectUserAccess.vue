@@ -60,7 +60,7 @@ const emit = defineEmits<{
   aspect-ratio: 1;
 
   &:hover {
-    background-color: #93c5fd;
+    background-color: var(--hover-color);
   }
 }
 </style>

@@ -48,9 +48,10 @@ function setTheme(newTheme: string) {
   font-size: 1.5rem;
   padding: 0.25rem;
   text-align: center;
+  cursor: pointer;
 
   &:hover {
-    background-color: #bfdbfe;
+    background-color: var(--hover-color);
   }
 }
 </style>

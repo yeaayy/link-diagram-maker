@@ -84,9 +84,10 @@ function addEmail() {
 .remove {
   padding: 0.5rem;
   margin-left: auto;
+  cursor: pointer;
 
   &:hover {
-    background-color: #93c5fd;
+    background-color: var(--hover-color);
   }
 }
 </style>

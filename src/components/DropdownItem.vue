@@ -16,7 +16,7 @@ div {
   padding: 0.5rem;
 
   &:hover {
-    background-color: lightblue;
+    background-color: var(--hover-color);
   }
 }
 </style>

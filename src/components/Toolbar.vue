@@ -214,7 +214,7 @@ onBeforeUnmount(() => {
   color: grey;
 
   &.enable:hover {
-    background-color: lightblue;
+    background-color: var(--hover-color);
   }
 
   &.enable {
@@ -250,5 +250,6 @@ onBeforeUnmount(() => {
 
 .sharing-option {
   margin-right: 0.5rem;
+  white-space: nowrap;
 }
 </style>

@@ -71,6 +71,9 @@ function cancelEdit() {
 span {
   display: inline-block;
   padding: 4px 3px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 span.readonly {

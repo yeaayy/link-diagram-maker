@@ -92,7 +92,7 @@ async function confirmLogout() {
 
   &:hover {
     box-shadow: 0px 0px 0.125rem var(--black);
-    background-color: #bfdbfe;
+    background-color: var(--hover-color);
   }
 }
 </style>

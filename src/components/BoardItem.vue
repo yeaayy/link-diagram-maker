@@ -130,7 +130,7 @@ function share() {
   }
 
   &:hover:not(:has(.menu:hover)) {
-    background-color: #93c5fd;
+    background-color: var(--hover-color);
     cursor: pointer;
   }
 }
@@ -146,8 +146,10 @@ function share() {
 }
 
 .menu {
+  cursor: pointer;
+
   &:hover {
-    background-color: #93c5fd;
+    background-color: var(--hover-color);
   }
 }
 </style>

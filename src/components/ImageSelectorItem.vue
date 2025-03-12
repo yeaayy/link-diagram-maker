@@ -72,7 +72,7 @@ img {
   margin-left: auto;
 
   &:hover {
-    background-color: lightblue;
+    background-color: var(--hover-color);
   }
 }
 
@@ -81,7 +81,7 @@ img {
   cursor: pointer;
 
   &:hover {
-    background-color: lightblue;
+    background-color: var(--hover-color);
   }
 }
 

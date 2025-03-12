@@ -135,7 +135,7 @@ defineExpose({
   margin-right: 0.5rem;
 
   &:hover {
-    background-color: lightblue;
+    background-color: var(--hover-color);
   }
 }
 
@@ -157,7 +157,7 @@ defineExpose({
 }
 
 .image-selector.selecting .item:hover:not(:has(.menu:hover)) {
-  background-color: lightblue;
+  background-color: var(--hover-color);
 }
 
 .item.empty {

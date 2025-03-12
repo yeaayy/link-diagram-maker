@@ -198,9 +198,10 @@ button {
   border: 1px solid #93c5fd;
   border-radius: 9999px;
   background-color: white;
+  cursor: pointer;
 
   &:hover {
-    background-color: #bfdbfe;
+    background-color: var(--hover-color);
   }
 }
 </style>
