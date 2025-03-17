@@ -8,7 +8,7 @@ import { shallowRef, type ComponentInstance } from 'vue';
 import { useRouter } from 'vue-router';
 import Dropdown from './Dropdown.vue';
 import DropdownItem from './DropdownItem.vue';
-import ThemeSelector from './ThemeSelector.vue';
+import Settings from '@/components/Settings.vue';
 
 const menuButton = shallowRef(null! as HTMLElement);
 const menuDropdown = shallowRef(null! as ComponentInstance<typeof Dropdown>);
@@ -19,14 +19,6 @@ const confirm = useConfirm();
 const http = useHttp();
 
 authManager.protect();
-
-function openMyDiagram() {
-  router.push({ name: 'my-boards' });
-}
-
-function openProfile() {
-  router.push({ name: 'profile' });
-}
 
 async function confirmLogout() {
   const confirmed = await confirm({
@@ -45,23 +37,13 @@ async function confirmLogout() {
 
 <template>
   <div class="navbar" v-if="user">
-    <ThemeSelector />
+    <Settings />
     <div ref="menuButton" class="menu" @click="menuDropdown.toggle()">
       <FontAwesomeIcon class="user" :icon="faUserCircle" />
       <div>{{ user.name }}</div>
     </div>
 
     <Dropdown ref="menuDropdown" :relative="menuButton">
-      <DropdownItem @click="openMyDiagram">
-        <FontAwesomeIcon :icon="faFileAlt" />
-        My Diagrams
-      </DropdownItem>
-
-      <DropdownItem @click="openProfile">
-        <FontAwesomeIcon :icon="faUser" />
-        Profile
-      </DropdownItem>
-
       <DropdownItem @click="confirmLogout">
         <FontAwesomeIcon :icon="faSignOut" />
         Log out

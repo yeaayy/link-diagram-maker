@@ -103,6 +103,7 @@ export class ShortcutManager {
       'new-note': ['alt+n', 'ctrl+shift+n'],
       'new-image-note': ['alt+i'],
       'select-all': ['ctrl+a'],
+      'accept': ['enter'],
       'cancel': ['escape'],
       'move-left': ['arrowleft'],
       'move-up': ['arrowup'],

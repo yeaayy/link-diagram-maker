@@ -1,17 +1,14 @@
 <script setup lang="ts">
-import Navbar from '@/components/Navbar.vue';
 import ChangePassword from '@/components/profile/ChangePassword.vue';
 import DeleteAccount from '@/components/profile/DeleteAccount.vue';
 import EditUser from '@/components/profile/EditUser.vue';
 import EmailList from '@/components/profile/EmailList.vue';
-import { faEnvelope, faLock, faMailBulk, faUser, faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import { faEnvelope, faLock, faUser, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 </script>
 
 <template>
-  <div class="app-content" v-title="'Profile'">
-    <Navbar />
-
+  <div>
     <h3>
       <FontAwesomeIcon :icon="faUser" />
       PROFILE
@@ -49,8 +46,12 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
 <style scoped>
 h3 {
-  margin-top: 2rem;
   margin-bottom: 0rem;
+  margin-top: 2rem;
+
+  &:first-of-type {
+    margin-top: 0;
+  }
 }
 
 hr {

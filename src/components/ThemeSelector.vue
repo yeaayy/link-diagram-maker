@@ -7,48 +7,60 @@ import DropdownItem from './DropdownItem.vue';
 
 const dropdown = ref(null! as ComponentInstance<typeof Dropdown>);
 const button = ref(null! as HTMLElement);
-const theme = inject('theme')! as Ref<string>;
+const data = {
+  auto: {
+    name: 'Auto',
+    icon: faCircleHalfStroke,
+  },
+  light: {
+    name: 'Light',
+    icon: faSun,
+  },
+  dark: {
+    name: 'Dark',
+    icon: faMoon,
+  },
+};
+const theme = inject('theme')! as Ref<keyof typeof data>;
 
 function toggleDropdown() {
   dropdown.value.toggle();
 }
 
-function setTheme(newTheme: string) {
+function setTheme(newTheme: keyof typeof data) {
   theme.value = newTheme;
 }
 </script>
 
 <template>
   <div v-bind="$attrs" ref="button" id="theme-selector" title="Select Theme" @click="toggleDropdown">
-    <FontAwesomeIcon :icon="
-      theme === 'auto' ? faCircleHalfStroke
-      : theme === 'light' ? faSun
-      : faMoon" />
+    <FontAwesomeIcon class="fa-xl" :icon="data[theme].icon" />
+    <span>{{ data[theme].name }}</span>
   </div>
 
   <Dropdown ref="dropdown" :relative="button">
-      <DropdownItem @click="setTheme('auto')">
-        <FontAwesomeIcon :icon="faCircleHalfStroke" />
-        Auto
-      </DropdownItem>
-      <DropdownItem @click="setTheme('light')">
-        <FontAwesomeIcon :icon="faSun" />
-        Light Mode
-      </DropdownItem>
-      <DropdownItem @click="setTheme('dark')">
-        <FontAwesomeIcon :icon="faMoon" />
-        Dark Mode
-      </DropdownItem>
-    </Dropdown>
+    <DropdownItem v-for="(o, id) in data" @click="setTheme(id)">
+      <FontAwesomeIcon :icon="o.icon" />
+      {{ o.name }}
+    </DropdownItem>
+  </Dropdown>
 </template>
 
 <style scoped>
 #theme-selector {
-  width: 2rem;
-  font-size: 1.5rem;
-  padding: 0.25rem;
+  width: min-content;
+  white-space: nowrap;
+  padding: 0.5rem;
   text-align: center;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--black);
+  border-radius: 0.25rem;
+
+  > span {
+    margin-left: 0.5rem;
+  }
 
   &:hover {
     background-color: var(--hover-color);

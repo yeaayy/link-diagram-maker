@@ -12,6 +12,7 @@ export const AllShortcut = [
   new ShortcutDesc('new-note', 'New note'),
   new ShortcutDesc('new-image-note', 'New note with image'),
   new ShortcutDesc('cancel', 'Close/cancel'),
+  new ShortcutDesc('accept', 'Accept/ok'),
   new ShortcutDesc('select-all', 'Select all'),
   new ShortcutDesc('move-left', 'Move note left'),
   new ShortcutDesc('move-right', 'Move note right'),

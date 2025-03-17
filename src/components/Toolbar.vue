@@ -15,7 +15,7 @@ import { useRouter } from 'vue-router';
 import BoardAccess from './BoardAccess.vue';
 import ClickToEdit from './ClickToEdit.vue';
 import MyButton from './MyButton.vue';
-import ThemeSelector from './ThemeSelector.vue';
+import Settings from './Settings.vue';
 
 const prop = defineProps<{
   board: BoardView;
@@ -169,7 +169,7 @@ onBeforeUnmount(() => {
           <FontAwesomeIcon :icon="faShareAlt" />
           Sharing Option
         </MyButton>
-        <ThemeSelector />
+        <Settings />
       </div>
     </div>
 
