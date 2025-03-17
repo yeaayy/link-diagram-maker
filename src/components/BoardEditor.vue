@@ -425,17 +425,16 @@ function onConnectionClicked(conn: ConnectionView) {
 function disableEditing() {
   dropArea.dropped.remove(onFileDropped);
   dropArea.detach();
-  keyboard.removeShortcut('delete', onPressDelete);
-  keyboard.removeShortcut('shift+delete', onForceDelete);
-  keyboard.removeShortcut('alt+n', createNewNote);
-  keyboard.removeShortcut('ctrl+shift+n', createNewNote);
-  keyboard.removeShortcut('alt+i', createNewImageNote);
-  keyboard.removeShortcut('ctrl+a', selectAllNote);
-  keyboard.removeShortcut('escape', unselect);
-  keyboard.removeShortcut('arrowleft', moveNoteLeft);
-  keyboard.removeShortcut('arrowright', moveNoteRight);
-  keyboard.removeShortcut('arrowup', moveNoteUp);
-  keyboard.removeShortcut('arrowdown', moveNoteDown);
+  keyboard.removeAction('delete', onPressDelete);
+  keyboard.removeAction('force-delete', onForceDelete);
+  keyboard.removeAction('new-note', createNewNote);
+  keyboard.removeAction('new-image-note', createNewImageNote);
+  keyboard.removeAction('select-all', selectAllNote);
+  keyboard.removeAction('cancel', unselect);
+  keyboard.removeAction('move-left', moveNoteLeft);
+  keyboard.removeAction('move-right', moveNoteRight);
+  keyboard.removeAction('move-up', moveNoteUp);
+  keyboard.removeAction('move-down', moveNoteDown);
 
   for (const conn of board.connections) {
     removeConnectionListener(conn);
@@ -448,17 +447,16 @@ function disableEditing() {
 function enableEditing() {
   dropArea.dropped.listen(onFileDropped);
   dropArea.attach(root.value);
-  keyboard.addShortcut('delete', onPressDelete);
-  keyboard.addShortcut('shift+delete', onForceDelete);
-  keyboard.addShortcut('alt+n', createNewNote);
-  keyboard.addShortcut('ctrl+shift+n', createNewNote);
-  keyboard.addShortcut('alt+i', createNewImageNote);
-  keyboard.addShortcut('ctrl+a', selectAllNote);
-  keyboard.addShortcut('escape', unselect);
-  keyboard.addShortcut('arrowleft', moveNoteLeft);
-  keyboard.addShortcut('arrowright', moveNoteRight);
-  keyboard.addShortcut('arrowup', moveNoteUp);
-  keyboard.addShortcut('arrowdown', moveNoteDown);
+  keyboard.overrideAction('delete', onPressDelete);
+  keyboard.overrideAction('force-delete', onForceDelete);
+  keyboard.overrideAction('new-note', createNewNote);
+  keyboard.overrideAction('new-image-note', createNewImageNote);
+  keyboard.overrideAction('select-all', selectAllNote);
+  keyboard.overrideAction('cancel', unselect);
+  keyboard.overrideAction('move-left', moveNoteLeft);
+  keyboard.overrideAction('move-right', moveNoteRight);
+  keyboard.overrideAction('move-up', moveNoteUp);
+  keyboard.overrideAction('move-down', moveNoteDown);
 
   for (const note of board.notes) {
     attachNoteListener(note);
@@ -479,7 +477,7 @@ onMounted(async() => {
   root.value.addEventListener('wheel', onWheel);
   onWindowResize();
   window.addEventListener('resize', onWindowResize);
-  keyboard.addShortcut('home', resetView);
+  keyboard.overrideAction('reset-view', resetView);
 
   svg.value.appendChild(previewConnection);
   previewConnection.classList.add('preview-connection');
@@ -508,7 +506,7 @@ onBeforeUnmount(() => {
   poinerHandler.detach();
   root.value.removeEventListener('wheel', onWheel);
   window.removeEventListener('resize', onWindowResize);
-  keyboard.removeShortcut('home', resetView);
+  keyboard.removeAction('reset-view', resetView);
   svg.value.removeChild(previewConnection);
   if (board.editable) {
     disableEditing();

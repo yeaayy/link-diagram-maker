@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import keyboard from '@/utils/keyboard';
 import { type IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { shallowRef, type ComponentInstance, watchEffect } from 'vue';
+import { shallowRef, watchEffect, type ComponentInstance } from 'vue';
 import ModalDialog from './ModalDialog.vue';
 
 const prop = withDefaults(defineProps<{
@@ -18,12 +19,13 @@ const prop = withDefaults(defineProps<{
 });
 
 const modalDialog = shallowRef<ComponentInstance<typeof ModalDialog> | null>(null);
-const positiveButton = shallowRef<null | HTMLButtonElement>(null);
 let pendingResolve: null | ((result: boolean) => void) = null;
 
 watchEffect(() => {
-  if (positiveButton.value) {
-    positiveButton.value.focus();
+  if (modalDialog?.value?.isShowing()) {
+    keyboard.overrideAction('accept', resolvePositive);
+  } else {
+    keyboard.removeAction('accept', resolvePositive);
   }
 })
 
@@ -70,12 +72,12 @@ defineExpose({
       {{ title }}
     </template>
     <template #footer>
-      <button class="negative" @click="resolveNegative">
+      <button @click="resolveNegative">
         <slot name="negative">
           {{ negativeName }}
         </slot>
       </button>
-      <button ref="positiveButton" class="positive" @click="resolvePositive">
+      <button @click="resolvePositive">
         <slot name="positive">
           {{ positiveName }}
         </slot>
@@ -89,13 +91,10 @@ button {
   background-color: var(--white);
   color: var(--black);
   border: none;
-}
+  cursor: pointer;
 
-.negative:hover {
-  background-color: rgb(226, 152, 152);
-}
-
-.positive:hover {
-  background-color: rgb(152, 178, 226);
+  &:hover {
+    background-color: var(--hover-color);
+  }
 }
 </style>

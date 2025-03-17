@@ -4,10 +4,10 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 </script>
 
 <template>
-  <button class="delete">
-      <FontAwesomeIcon :icon="faTrash" />
-      Delete
-    </button>
+  <div class="delete">
+    <FontAwesomeIcon :icon="faTrash" />
+    Delete
+  </div>
 </template>
 
 <style scoped>
@@ -20,6 +20,8 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
   width: 100%;
   box-shadow: none;
   border: none;
+  text-align: center;
+  cursor: pointer;
 
   &:hover {
     background-color: #ff6666;

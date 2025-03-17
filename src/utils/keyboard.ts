@@ -1,4 +1,12 @@
+import type { ShortcutID } from "./Shortcut";
 import TypedEventListener from "./TypedEventListener";
+
+type OverrideHandler = (e: KeyboardEvent, key: string) => (boolean | void);
+
+type KeyboardActionObject = {
+  action(): boolean | void;
+  instance: unknown;
+}
 
 class KeyboardAction {
   public readonly ctrlState = new TypedEventListener<[isPressed: boolean]>();
@@ -6,7 +14,9 @@ class KeyboardAction {
 
   private _ctrlPressed = false;
   private _shiftPressed = false;
-  private shortcut = new Map<string, TypedEventListener<void>>();
+  private actions = new Map<ShortcutID, KeyboardActionObject[]>();
+  private shortcuts = new Map<string, ShortcutID>();
+  private overrideHandler: null | OverrideHandler = null;
 
   constructor() {
     window.addEventListener('keydown', (e) => this.onKeyDown(e));
@@ -21,6 +31,8 @@ class KeyboardAction {
         this._ctrlPressed = true;
         this.ctrlState.emit(true);
         break;
+      case 'Meta':
+        break;
       case 'Alt':
         break;
       case 'Shift':
@@ -32,12 +44,25 @@ class KeyboardAction {
         if (e.ctrlKey) keyList.push('ctrl');
         if (e.altKey) keyList.push('alt');
         if (e.shiftKey) keyList.push('shift');
-        keyList.push(e.key);
-        const key = keyList.join('+').toLowerCase();
+        if (e.metaKey) keyList.push('meta');
+        keyList.push(e.key === ' ' ? 'space' : e.key.toLowerCase());
+        const key = keyList.join('+');
 
-        const listeners = this.shortcut.get(key);
-        if (listeners && listeners.hasListener()) {
-          listeners.emit();
+        let result = this.overrideHandler?.call(undefined, e, key);
+        if (result) {
+          return;
+        }
+
+        const actionId = this.shortcuts.get(key);
+        if (actionId === undefined) {
+          return;
+        }
+        const actionList = this.actions.get(actionId);
+        if (!actionList || actionList.length === 0) {
+          return;
+        }
+        const action = actionList[actionList.length - 1];
+        if (!action.action.call(action.instance)) {
           e.preventDefault();
         }
     }
@@ -63,21 +88,50 @@ class KeyboardAction {
     this.shiftState.emit(false);
   }
 
-  public addShortcut(key: string, action: () => void, thisInstance?: unknown) {
-    let listeners = this.shortcut.get(key);
-    if (!listeners) {
-      listeners = new TypedEventListener<void>();
-      this.shortcut.set(key, listeners);
-    }
-    return listeners.listen(action, thisInstance);
+  setOverrideHandler(handler: OverrideHandler | null) {
+    this.overrideHandler = handler;
   }
 
-  public removeShortcut(key: string, action: () => void, thisInstance?: unknown): boolean {
-    const listeners = this.shortcut.get(key);
-    if (!listeners) {
+  public overrideAction(actionId: ShortcutID, action: () => void, thisInstance?: unknown) {
+    let actionList = this.actions.get(actionId);
+    if (actionList === undefined) {
+      actionList = [];
+      this.actions.set(actionId, actionList);
+    }
+    actionList.push({
+      action,
+      instance: thisInstance,
+    });
+  }
+
+  public removeAction(actionId: ShortcutID, action: () => void, thisInstance?: unknown) {
+    let actionList = this.actions.get(actionId);
+    if (actionList === undefined) {
+      return;
+    }
+    const index = actionList.findIndex(v => v.action === action && v.instance === thisInstance);
+    if (index !== -1) {
+      actionList.splice(index, 1);
+    }
+    if (actionList.length === 0) {
+      this.actions.delete(actionId);
+    }
+  }
+
+  public setShortcut(key: string, actionId: ShortcutID): boolean {
+    if (this.shortcuts.has(key)) {
       return false;
     }
-    return listeners.remove(action, thisInstance);
+    this.shortcuts.set(key, actionId);
+    return true;
+  }
+
+  public removeShortcut(key: string): boolean {
+    return this.shortcuts.delete(key);
+  }
+
+  public getShortcut(key: string) {
+    return this.shortcuts.get(key);
   }
 
   public get ctrlPressed() {

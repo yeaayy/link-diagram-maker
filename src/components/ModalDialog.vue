@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import keyboard from '@/utils/keyboard';
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { ref, watchEffect } from 'vue';
+
+defineOptions({
+  inheritAttrs: false,
+});
 
 const prop = withDefaults(defineProps<{
   show?: boolean;
@@ -15,6 +19,14 @@ const emit = defineEmits<{
   close: [],
 }>()
 const show = ref(prop.show);
+
+watchEffect(() => {
+  if (show.value) {
+    keyboard.overrideAction('cancel', cancel);
+  } else {
+    keyboard.removeAction('cancel', cancel);
+  }
+});
 
 function cancel() {
   if (!prop.cancelable) return;
@@ -40,14 +52,6 @@ defineExpose({
     return show.value;
   },
 })
-
-onMounted(() => {
-  keyboard.addShortcut('escape', cancel);
-});
-
-onBeforeUnmount(() => {
-  keyboard.removeShortcut('escape', cancel);
-})
 </script>
 
 <template>
@@ -55,7 +59,7 @@ onBeforeUnmount(() => {
     <Transition>
       <div class="backdrop" @click.self.stop="cancel" v-bind="$attrs">
         <div class="modal">
-          <div class="title">
+          <div class="title" v-if="$slots.title">
             <slot name="title"></slot>
           </div>
           <div class="body">

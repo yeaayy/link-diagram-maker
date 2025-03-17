@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { confirmDialogKey, type ConfirmDialogData } from '@/confirm';
 import { loadingKey } from '@/loading';
-import { provide, ref, shallowRef, type ComponentInstance, onMounted, onBeforeUnmount } from 'vue';
+import { onBeforeUnmount, onMounted, provide, ref, shallowRef, type ComponentInstance } from 'vue';
 import { RouterView, useRouter } from 'vue-router';
 import { AuthManager, authManagerKey } from './AuthManager';
-import { ImageStorage, imageStorageKey } from './ImageStorage';
 import { alertDialogKey, type AlertDialogData } from './alert';
 import AlertDialog from './components/AlertDialog.vue';
 import ConfirmDialog from './components/ConfirmDialog.vue';

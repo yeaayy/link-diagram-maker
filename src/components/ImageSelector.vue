@@ -5,7 +5,7 @@ import { DropArea } from '@/utils/DropArea';
 import keyboard from '@/utils/keyboard';
 import { faUpload, faX } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { inject, onBeforeMount, onMounted, shallowRef, watch } from 'vue';
+import { inject, shallowRef, watch, watchEffect } from 'vue';
 import ImageSelectorItem from './ImageSelectorItem.vue';
 
 const root = shallowRef<null | HTMLElement>(null);
@@ -19,6 +19,14 @@ let pendingReject: null | ((reason: any) => void);
 
 dropArea.dropped.listen(img => {
   imageStorage.upload(img);
+});
+
+watchEffect(() => {
+  if (show.value) {
+    keyboard.overrideAction('cancel', cancelSelecting);
+  } else {
+    keyboard.removeAction('cancel', cancelSelecting);
+  }
 });
 
 watch(root, root => {
@@ -47,14 +55,6 @@ function cancelSelecting() {
 function deleteImage(img: StoredImage) {
   imageStorage.delete(img);
 }
-
-onMounted(() => {
-  keyboard.addShortcut('escape', cancelSelecting);
-})
-
-onBeforeMount(() => {
-  keyboard.removeShortcut('escape', cancelSelecting);
-})
 
 defineExpose({
   open() {

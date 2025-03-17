@@ -137,9 +137,9 @@ function gotoMyBoards() {
 }
 
 onMounted(() => {
-  keyboard.addShortcut('ctrl+s', onSave);
-  keyboard.addShortcut('ctrl+z', onUndo);
-  keyboard.addShortcut('ctrl+shift+z', onRedo);
+  keyboard.overrideAction('save', onSave);
+  keyboard.overrideAction('undo', onUndo);
+  keyboard.overrideAction('redo', onRedo);
   snapshot.state.listen(onStateChanged);
   prop.board.noteSnapshotAction.listen(onNoteSnapshotAction);
   prop.board.connectionSnapshotAction.listen(onConnectionSnapshotAction);
@@ -148,9 +148,9 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  keyboard.removeShortcut('ctrl+s', onSave);
-  keyboard.removeShortcut('ctrl+z', onUndo);
-  keyboard.removeShortcut('ctrl+shift+z', onRedo);
+  keyboard.removeAction('save', onSave);
+  keyboard.removeAction('undo', onUndo);
+  keyboard.removeAction('redo', onRedo);
   snapshot.state.remove(onStateChanged);
   prop.board.noteSnapshotAction.remove(onNoteSnapshotAction);
   prop.board.connectionSnapshotAction.remove(onConnectionSnapshotAction);
@@ -179,17 +179,17 @@ onBeforeUnmount(() => {
           save: true,
           enable: isDirty,
         }" :icon="faSave"
-        @click="onSave" title="Save (CTRL+S)" />
+        @click="onSave" title="Save" />
 
       <FontAwesomeIcon class="icon enable" :icon="faImage" @click="imageSelector.open()" title="Open All Image" />
-      <FontAwesomeIcon class="icon enable" :icon="faHome" @click="$emit('home')" title="Reset view (Home)" />
-      <FontAwesomeIcon class="icon enable" :icon="faPlusCircle" @click="$emit('newNote')" title="Add note (ALT+N)" />
-      <div class="icon enable" @click="$emit('newImageNote')" title="Add note with image (ALT+I)">
+      <FontAwesomeIcon class="icon enable" :icon="faHome" @click="$emit('home')" title="Reset view" />
+      <FontAwesomeIcon class="icon enable" :icon="faPlusCircle" @click="$emit('newNote')" title="Add note" />
+      <div class="icon enable" @click="$emit('newImageNote')" title="Add note with image">
         <FontAwesomeIcon :icon="faImage"/>
         <FontAwesomeIcon class="subicon" :icon="faCirclePlus"/>
       </div>
-      <FontAwesomeIcon :class="{icon: true, enable: undoName !== undefined}" :icon="faArrowRotateLeft" @click="onUndo" :title="'Undo ' + (undoName || '') + ' (CTRL+Z)'" />
-      <FontAwesomeIcon :class="{icon: true, enable: redoName !== undefined}" :icon="faArrowRotateRight" @click="onRedo" :title="'Redo ' + (redoName || '') + ' (CTRL+SHIFT+Z)'" />
+      <FontAwesomeIcon :class="{icon: true, enable: undoName !== undefined}" :icon="faArrowRotateLeft" @click="onUndo" :title="'Undo ' + (undoName || '')" />
+      <FontAwesomeIcon :class="{icon: true, enable: redoName !== undefined}" :icon="faArrowRotateRight" @click="onRedo" :title="'Redo ' + (redoName || '')" />
     </div>
 
     <BoardAccess v-if="showBoardAccess" :board-id="board.id" @close="showBoardAccess = false" />
