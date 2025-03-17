@@ -122,7 +122,7 @@ function copyLink() {
 </script>
 
 <template>
-  <ModalDialog ref="dialog" @close="emit('close')" show>
+  <ModalDialog ref="dialog" @close="$emit('close')" @cancel="$emit('close')" show>
     <input
       ref="searchInput"
       type="text"
