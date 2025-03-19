@@ -10,7 +10,7 @@ import sleep from '@/utils/sleep';
 import { faArrowCircleLeft, faArrowRotateLeft, faArrowRotateRight, faCirclePlus, faHome, faImage, faPlusCircle, faSave, faShareAlt, faWarning } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { AxiosError } from 'axios';
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { inject, onBeforeUnmount, onMounted, ref, type Ref } from 'vue';
 import { useRouter } from 'vue-router';
 import BoardAccess from './BoardAccess.vue';
 import ClickToEdit from './ClickToEdit.vue';
@@ -29,8 +29,9 @@ const emit = defineEmits<{
   newImageNote: [];
 }>();
 
-let interval: NodeJS.Timeout
+let saveTimeout: NodeJS.Timeout | null = null;
 let pendingSave: Promise<void> | null
+const autoSaveInterval = inject<Ref<number>>('autosave-delay')!;
 const boardName = defineModel<string>('boardName', { default: '' });
 const http = useHttp();
 const imageSelector = useImageSelector();
@@ -89,9 +90,28 @@ async function doSave() {
   pendingSave = null;
 }
 
+function scheduleAutosave() {
+  if (autoSaveInterval.value != 0) {
+    cancelAutosave();
+    saveTimeout = setTimeout(onSave, autoSaveInterval.value * 1000);
+  }
+}
+
+function cancelAutosave() {
+  if (saveTimeout !== null) {
+    clearTimeout(saveTimeout);
+    saveTimeout = null;
+  }
+}
+
 function onHistoryChanged(history: ActionHistory) {
   undoName.value = history.getUndoName();
   redoName.value = history.getRedoName();
+  if (snapshot.isDirty) {
+    scheduleAutosave();
+  } else {
+    cancelAutosave();
+  }
 }
 
 function onNoteSnapshotAction(backward: NoteSnapshotAction, forward: NoteSnapshotAction) {
@@ -112,6 +132,8 @@ function onSave() {
   if (!snapshot.isDirty) return;
 
   if (pendingSave) return;
+
+  saveTimeout = null;
   pendingSave = doSave();
 }
 
@@ -144,7 +166,7 @@ onMounted(() => {
   prop.board.noteSnapshotAction.listen(onNoteSnapshotAction);
   prop.board.connectionSnapshotAction.listen(onConnectionSnapshotAction);
   prop.history.changed.listen(onHistoryChanged);
-  interval = setInterval(onSave, parseInt(import.meta.env.VITE_AUTOSAVE_INTERVAL) * 1000);
+  scheduleAutosave();
 });
 
 onBeforeUnmount(() => {
@@ -155,7 +177,7 @@ onBeforeUnmount(() => {
   prop.board.noteSnapshotAction.remove(onNoteSnapshotAction);
   prop.board.connectionSnapshotAction.remove(onConnectionSnapshotAction);
   prop.history.changed.remove(onHistoryChanged);
-  clearInterval(interval);
+  cancelAutosave();
 })
 </script>
 

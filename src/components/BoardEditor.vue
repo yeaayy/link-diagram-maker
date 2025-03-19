@@ -18,7 +18,7 @@ import TriggerOnce from '@/utils/TriggerOnce';
 import keyboard, { getModifier } from '@/utils/keyboard';
 import { faUpload, faWarning } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { inject, onBeforeUnmount, onMounted, provide, ref, shallowReactive, shallowRef, triggerRef, type ComponentInstance, type Ref } from 'vue';
+import { inject, onBeforeUnmount, onMounted, provide, ref, shallowReactive, shallowRef, triggerRef, watch, type ComponentInstance, type Ref } from 'vue';
 
 let px = 0, py = 0;
 let draggedNote: null | NoteView = null;
@@ -34,6 +34,7 @@ const noteEditor = shallowRef(null! as ComponentInstance<typeof NoteEditor>);
 const imageSelector = shallowRef(null! as ComponentInstance<typeof ImageSelector>);
 const fixSelection = new TriggerOnce(onFixSelection);
 const imageStorage = inject(imageStorageKey)!;
+const undoLimit = inject<Ref<number>>('undo-limit')!;
 const dropArea = new DropArea('image/');
 const poinerHandler = new PointerHandler({
   onmove: onPointerMove,
@@ -55,11 +56,15 @@ const prop = defineProps<{
   board: BoardView;
 }>();
 const board = shallowReactive(prop.board);
-const history = new ActionHistory(parseInt(import.meta.env.VITE_UNDO_LIMIT), {
+const history = new ActionHistory(undoLimit.value, {
   apply(snapshot) {
     board.applySnapshot(imageStorage, snapshot);
   },
 }, () => new Snapshot(board.id));
+
+watch(undoLimit, undoLimit => {
+  history.limit = undoLimit;
+});
 
 if (import.meta.env.DEV) {
   (window as any).board = board;
