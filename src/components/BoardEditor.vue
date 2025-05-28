@@ -491,10 +491,14 @@ onMounted(async() => {
   for (const note of board.notes) {
     note.attach(noteContainer.value);
   }
-  for (const conn of board.connections) {
-    conn.attach(svg.value);
-    conn.updateView();
-  }
+
+  // Wait until right after the note have proper position relative to the canvas
+  setTimeout(function () {
+    for (const conn of board.connections) {
+      conn.attach(svg.value);
+      conn.updateView();
+    }
+  }, 0);
 
   if (board.editable) {
     enableEditing();
