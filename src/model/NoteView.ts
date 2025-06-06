@@ -253,4 +253,9 @@ export class NoteView {
       c.updateView();
     }
   }
+
+  public get l()  { return this._x }
+  public get t()  { return this._y }
+  public get r()  { return this._x + this.viewRoot.clientWidth }
+  public get b()  { return this._y + this.viewRoot.clientHeight }
 }

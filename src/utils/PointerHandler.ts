@@ -16,6 +16,10 @@ export type PointerHandlerOpt = {
 }
 
 export default class PointerHandler {
+  public static MOUSE_LEFT_BUTTON = 1;
+  public static MOUSE_RIGHT_BUTTON = 2;
+  public static MOUSE_MIDDLE_BUTTON = 4;
+
   public instance?: unknown;
   public onstart?: OnHandlePointer;
   public onmove?: OnMoveHandler;
@@ -167,18 +171,21 @@ export default class PointerHandler {
   private onMouseMove(e: MouseEvent) {
     if (this.isPointerDown) {
       this.pointerMove(e, e.clientX, e.clientY);
-    } else if (this.onidle) {
+    }
+    if (this.onidle) {
       this.pointerIdle(e, e.clientX, e.clientY)
     }
   }
 
   private onMouseUp(e: MouseEvent) {
-    this.isPointerDown = false;
     this.pointerEnd(e, e.clientX, e.clientY);
-    if (!this.onidle) {
-      window.removeEventListener('mousemove', this);
+    if (e.buttons == 0) {
+      this.isPointerDown = false;
+      if (!this.onidle) {
+        window.removeEventListener('mousemove', this);
+      }
+      window.removeEventListener('mouseup', this);
     }
-    window.removeEventListener('mouseup', this);
   }
 
   public handleEvent(e: Event) {

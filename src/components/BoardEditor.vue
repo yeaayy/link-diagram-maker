@@ -6,6 +6,8 @@ import ImageSelector from '@/components/ImageSelector.vue';
 import NoteEditor from '@/components/NoteEditor.vue';
 import Toolbar from '@/components/Toolbar.vue';
 import { useConfirm } from '@/confirm';
+import Rect from '@/math/Rect';
+import RectMinMax from '@/math/RectMinMax';
 import { BoardView } from '@/model/BoardView';
 import { ConnectionView } from '@/model/ConnectionView';
 import { NoteView } from '@/model/NoteView';
@@ -36,8 +38,13 @@ const fixSelection = new TriggerOnce(onFixSelection);
 const imageStorage = inject(imageStorageKey)!;
 const undoLimit = inject<Ref<number>>('undo-limit')!;
 const dropArea = new DropArea('image/');
+
+let pointerInverval: NodeJS.Timeout | null = null;
+const selectArea = ref<null | RectMinMax>(null);
 const poinerHandler = new PointerHandler({
+  onstart: onPointerStart,
   onmove: onPointerMove,
+  onend: onPointerEnd,
   onidle: onPointerIdle,
   onclick: onPointerClick,
   stopPropagation: true,
@@ -79,6 +86,13 @@ function onconnectionSnapshotAction(backward: ConnectionSnapshotAction, forward:
   history.addConnectionSnapshotAction(backward, forward);
 }
 
+function transformScreenToCanvas(screenX: number, screenY: number) {
+  return [
+    screenX / board.scale - board.dx,
+    screenY / board.scale - board.dy,
+  ] as [number, number];
+}
+
 function isEditable() {
   return board.editable;
 }
@@ -90,17 +104,86 @@ function onFileDropped(file: File, e: DragEvent)  {
   }));
 }
 
+function onPointerStart(ev: GenericPointerEvent, px: number, py: number) {
+  if (ev instanceof MouseEvent && (ev.buttons & PointerHandler.MOUSE_LEFT_BUTTON) == 0) {
+    return;
+  }
+  pointerInverval = setInterval(onPointerIdleInterval, 1);
+}
+
 function onPointerIdle(ev: GenericPointerEvent, x: number, y: number) {
   const target = ev.target as HTMLElement;
-  if (target.classList.contains('content')) {
+  if (target.classList.contains('content') || selectArea.value) {
     px = x;
     py = y;
   }
 }
 
+function onPointerIdleInterval() {
+  if (selectArea.value == null) return;
+
+  const SCROLL_AREA = Math.min(board.width, board.height) * 0.1;
+  const SENSITIVITY = 2;
+  if (px < SCROLL_AREA) {
+    board.dx += (1 - px / SCROLL_AREA) * SENSITIVITY;
+  }
+  if (px > board.width - SCROLL_AREA) {
+    board.dx += (board.width - SCROLL_AREA - px) / SCROLL_AREA * SENSITIVITY;
+  }
+  if (py < SCROLL_AREA) {
+    board.dy += (1 - py / SCROLL_AREA) * SENSITIVITY;
+  }
+  if (py > board.height - SCROLL_AREA) {
+    board.dy += (board.height - SCROLL_AREA - py) / SCROLL_AREA * SENSITIVITY;
+  }
+  const [cnvX, cnvY] = transformScreenToCanvas(px, py);
+  selectArea.value!.x2 = cnvX;
+  selectArea.value!.y2 = cnvY;
+}
+
 function onPointerMove(ev: GenericPointerEvent, e: PointerMoveEvent) {
-  board.dx += e.dx / board.scale;
-  board.dy += e.dy / board.scale;
+  if (ev instanceof MouseEvent) {
+    if (ev.buttons & PointerHandler.MOUSE_MIDDLE_BUTTON) {
+      board.dx += e.dx / board.scale;
+      board.dy += e.dy / board.scale;
+    }
+    if (!selectArea.value && (ev.buttons & PointerHandler.MOUSE_LEFT_BUTTON)) {
+      selectArea.value = new RectMinMax(...transformScreenToCanvas(px, py));
+    }
+  } else {
+    board.dx += e.dx / board.scale;
+    board.dy += e.dy / board.scale;
+  }
+}
+
+function onPointerEnd(ev: GenericPointerEvent) {
+  if (selectArea.value && ev instanceof MouseEvent && !(ev.buttons & PointerHandler.MOUSE_LEFT_BUTTON)) {
+    if (pointerInverval) {
+      clearInterval(pointerInverval);
+    }
+    if (!keyboard.shiftPressed) {
+      unselectNote(false);
+    }
+    for (const note of board.notes) {
+      if (!Rect.isRectInsideRectRR(note, selectArea.value)) continue;
+
+      if (keyboard.shiftPressed) {
+        const index = selectedNote.value.indexOf(note);
+        if (index === -1) {
+          selectedNote.value.push(note);
+          note.highlight();
+        } else {
+          selectedNote.value.splice(index, 1);
+          note.highlight(false);
+        }
+      } else {
+        selectedNote.value.push(note);
+        note.highlight();
+      }
+    }
+    selectArea.value = null;
+    triggerRef(selectedNote);
+  }
 }
 
 function onPointerClick(ev: GenericPointerEvent) {
@@ -547,6 +630,12 @@ onBeforeUnmount(() => {
       '--shift-y': board.dy + 'px',
       '--scale': board.scale,
     }">
+      <div v-if="selectArea" class="note select-area" :style="{
+        '--x': selectArea.l + 'px',
+        '--y': selectArea.t + 'px',
+        width: selectArea.width + 'px',
+        height: selectArea.height + 'px',
+      }"></div>
     </div>
 
     <div class="overlay">
@@ -606,6 +695,17 @@ onBeforeUnmount(() => {
 
 .dropping > .overlay {
   display: flex;
+}
+
+.select-area {
+  border-radius: 0px;
+  border-width: calc(2px / var(--scale));
+  border-color: var(--active-color);
+  background-color: var(--hover-color);
+  opacity: 0.5;
+  z-index: 1;
+  user-select: none;
+  padding: 0px;
 }
 </style>
 
