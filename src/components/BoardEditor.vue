@@ -105,7 +105,7 @@ function onFileDropped(file: File, e: DragEvent)  {
 }
 
 function onPointerStart(ev: GenericPointerEvent, px: number, py: number) {
-  if (ev instanceof MouseEvent && (ev.buttons & PointerHandler.MOUSE_LEFT_BUTTON) == 0) {
+  if (ev instanceof MouseEvent && (ev.buttons & PointerHandler.MOUSE_LEFT_BUTTON) == 0 || !board.editable) {
     return;
   }
   pointerInverval = setInterval(onPointerIdleInterval, 1);
@@ -147,7 +147,7 @@ function onPointerMove(ev: GenericPointerEvent, e: PointerMoveEvent) {
       board.dx += e.dx / board.scale;
       board.dy += e.dy / board.scale;
     }
-    if (!selectArea.value && (ev.buttons & PointerHandler.MOUSE_LEFT_BUTTON)) {
+    if (!selectArea.value && (ev.buttons & PointerHandler.MOUSE_LEFT_BUTTON) && board.editable) {
       selectArea.value = new RectMinMax(...transformScreenToCanvas(px, py));
     }
   } else {
