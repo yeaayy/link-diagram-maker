@@ -160,4 +160,34 @@ export class ConnectionView {
     }
     return true;
   }
+
+  public static getMatchingStyle(connections: ConnectionView[]) {
+    if (connections.length === 0) return undefined;
+    let color: string | undefined = connections[0].color;
+    let size: number | undefined = connections[0].size;
+    let dash: number[] | undefined = connections[0].dash;
+
+    for (let i = 1; i < connections.length; i++) {
+      const currColor = connections[i].color;
+      const currSize = connections[i].size;
+      const currDash = connections[i].dash;
+      if (currColor !== color) {
+        color = undefined;
+      }
+      if (currSize !== size) {
+        size = undefined;
+      }
+      if (dash && !ConnectionView.isDashEqual(currDash, dash)) {
+        dash = undefined;
+      }
+    }
+    if (color === undefined && size === undefined && dash === undefined) {
+      return undefined;
+    }
+    return {
+      color,
+      size,
+      dash,
+    };
+  }
 }

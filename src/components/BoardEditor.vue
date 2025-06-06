@@ -277,6 +277,49 @@ function selectAllNote() {
   triggerRef(selectedNote);
 }
 
+function selectAllConnection() {
+  unselect();
+  for (const conn of board.connections) {
+    conn.highlight();
+  }
+  selectedConnection.value.push(...board.connections);
+}
+
+function selectMatchingConnection(matchColor: boolean, matchSize: boolean, matchDash: boolean) {
+  const matching = ConnectionView.getMatchingStyle(selectedConnection.value);
+  if (!matching) return;
+  if (matchColor && matching.color === undefined) return;
+  if (matchSize && matching.size === undefined) return;
+  if (matchDash && matching.dash === undefined) return;
+  for (const conn of board.connections) {
+    if (selectedConnection.value.indexOf(conn) !== -1) continue;
+    let match = true;
+    if (matchColor) match &&= conn.color == matching.color;
+    if (matchSize) match &&= conn.size == matching.size;
+    if (matchDash) match &&= ConnectionView.isDashEqual(conn.dash, matching.dash!);
+    if (match) {
+      conn.highlight();
+      selectedConnection.value.push(conn);
+    }
+  }
+}
+
+function selectLikeConnection() {
+  selectMatchingConnection(true, true, true);
+}
+
+function selectLikeConnectionColor() {
+  selectMatchingConnection(true, false, false);
+}
+
+function selectLikeConnectionSize() {
+  selectMatchingConnection(false, true, false);
+}
+
+function selectLikeConnectionDash() {
+  selectMatchingConnection(false, false, true);
+}
+
 function unselectConnection() {
   const length = selectedConnection.value.length;
   if (length === 0) return;
@@ -287,7 +330,7 @@ function unselectConnection() {
   selectedConnection.value.splice(0, length);
 }
 
-function unselectNote() {
+function unselectNote(update = true) {
   const length = selectedNote.value.length;
   if (length === 0) return;
 
@@ -295,12 +338,14 @@ function unselectNote() {
     note.highlight(false);
   }
   selectedNote.value.splice(0, length);
-  triggerRef(selectedNote);
+  if (update) {
+    triggerRef(selectedNote);
+  }
 }
 
-function unselect() {
+function unselect(update = true) {
   unselectConnection();
-  unselectNote();
+  unselectNote(update);
 }
 
 function onFixSelection() {
@@ -517,7 +562,12 @@ function disableEditing() {
   keyboard.removeAction('force-delete', onForceDelete);
   keyboard.removeAction('new-note', createNewNote);
   keyboard.removeAction('new-image-note', createNewImageNote);
-  keyboard.removeAction('select-all', selectAllNote);
+  keyboard.removeAction('select-all-note', selectAllNote);
+  keyboard.removeAction('select-all-connection', selectAllConnection);
+  keyboard.removeAction('select-like-connection', selectLikeConnection);
+  keyboard.removeAction('select-like-color', selectLikeConnectionColor);
+  keyboard.removeAction('select-like-size', selectLikeConnectionSize);
+  keyboard.removeAction('select-like-dash', selectLikeConnectionDash);
   keyboard.removeAction('cancel', unselect);
   keyboard.removeAction('move-left', moveNoteLeft);
   keyboard.removeAction('move-right', moveNoteRight);
@@ -539,7 +589,12 @@ function enableEditing() {
   keyboard.overrideAction('force-delete', onForceDelete);
   keyboard.overrideAction('new-note', createNewNote);
   keyboard.overrideAction('new-image-note', createNewImageNote);
-  keyboard.overrideAction('select-all', selectAllNote);
+  keyboard.overrideAction('select-all-note', selectAllNote);
+  keyboard.overrideAction('select-all-connection', selectAllConnection);
+  keyboard.overrideAction('select-like-connection', selectLikeConnection);
+  keyboard.overrideAction('select-like-color', selectLikeConnectionColor);
+  keyboard.overrideAction('select-like-size', selectLikeConnectionSize);
+  keyboard.overrideAction('select-like-dash', selectLikeConnectionDash);
   keyboard.overrideAction('cancel', unselect);
   keyboard.overrideAction('move-left', moveNoteLeft);
   keyboard.overrideAction('move-right', moveNoteRight);
