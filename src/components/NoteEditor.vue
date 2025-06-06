@@ -86,6 +86,15 @@ function onDelete() {
   overflow-y: scroll;
 }
 
+@media (orientation: portrait) {
+.note-editor {
+  top: initial;
+  left: 0.5rem;
+  width: initial;
+  height: 50%;
+}
+}
+
 #text {
   width: 100%;
   height: 32rem;

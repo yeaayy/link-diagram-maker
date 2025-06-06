@@ -103,10 +103,10 @@ h3 {
 .content {
   flex: 1;
   padding: 1rem;
-  overflow: scroll;
+  overflow: auto;
 }
 
-@media (max-width: 45rem) {
+@media (max-width: 59.99rem) {
 .tabs {
   overflow-x: scroll;
 
@@ -125,7 +125,7 @@ h3 {
 }
 }
 
-@media (min-width: 45rem) {
+@media (min-width: 60rem) {
 .tabs {
   border-right: 1px solid var(--black);
   flex-direction: column;
@@ -162,9 +162,9 @@ h3 {
   }
 }
 
-@media (min-width: 45rem) {
+@media (min-width: 60rem) {
   #settings-dialog {
-    --modal-width: 44rem;
+    --modal-width: 59rem;
 
     > .modal > .body {
       flex-direction: row;

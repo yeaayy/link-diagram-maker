@@ -201,6 +201,23 @@ function onDelete() {
   z-index: 2;
 }
 
+@media (orientation: portrait) {
+.connection-editor {
+  top: initial;
+  left: 0.5rem;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  width: initial;
+}
+}
+
+@media (orientation: portrait) and (min-width: 16rem) {
+.connection-editor {
+  left: initial;
+  width: 15rem;
+}
+}
+
 input[type=number] {
   width: 3rem;
   text-align: center;
