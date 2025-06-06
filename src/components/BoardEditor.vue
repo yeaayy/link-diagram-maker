@@ -100,7 +100,7 @@ function isEditable() {
 function onFileDropped(file: File, e: DragEvent)  {
   imageStorage.upload(file).then((img => {
     const b = board;
-    b.createNote(e.clientX / b.scale - b.dx, e.clientY / b.scale - b.dy, '', img)
+    b.createNote(e.clientX / b.scale - b.dx, e.clientY / b.scale - b.dy, 256, '', img)
   }));
 }
 
@@ -392,7 +392,7 @@ function createNewNote(img: StoredImage | null = null) {
   unselect();
   history.begin('new note');
   const b = board
-  const note = b.createNote(px / b.scale - b.dx, py / b.scale - b.dy, '', img);
+  const note = b.createNote(px / b.scale - b.dx, py / b.scale - b.dy, 256, '', img);
   note.highlight();
   selectedNote.value.push(note);
   triggerRef(selectedNote);
@@ -409,7 +409,7 @@ function createNewNoteAtCenter(img: StoredImage | null = null) {
   unselect();
   history.begin('new note');
   const b = board
-  const note = b.createNote(b.width / 2 / b.scale - b.dx, b.height / 2 / b.scale - b.dy, '', img);
+  const note = b.createNote(b.width / 2 / b.scale - b.dx, b.height / 2 / b.scale - b.dy, 256, '', img);
   selectedNote.value.push(note);
   note.highlight();
   history.end();
@@ -440,6 +440,7 @@ function attachNoteListener(note: NoteView) {
   note.startDrag.listen(onStartDragNote);
   note.dragging.listen(onDragNote);
   note.endDrag.listen(onEndDragNote);
+  note.resizing.listen(onNoteResizing);
 }
 
 function removeNoteListener(note: NoteView) {
@@ -448,6 +449,7 @@ function removeNoteListener(note: NoteView) {
   note.startDrag.remove(onStartDragNote);
   note.dragging.remove(onDragNote);
   note.endDrag.remove(onEndDragNote);
+  note.resizing.remove(onNoteResizing);
 }
 
 function onNoteClicked(note: NoteView) {
@@ -486,6 +488,11 @@ function onDragNote(note: NoteView, dx: number, dy: number) {
 
 function onEndDragNote(note: NoteView) {
   history.end();
+}
+
+function onNoteResizing(note: NoteView) {
+  history.end();
+  history.begin('resize note')
 }
 
 function moveNote(dx: number, dy: number) {

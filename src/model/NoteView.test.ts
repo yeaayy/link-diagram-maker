@@ -16,7 +16,7 @@ test('Destroying StoredImage make NoteView.img set to null', () => {
   const imageStorage = new ImageStorage(null!);
   const PATH = 'IMAGE';
   const img = imageStorage.getOrAdd(PATH, 1);
-  const note = board.newNote(1, 0, 0, '', img);
+  const note = board.newNote(1, 0, 0, 0, '', img);
   note.attach(document.createElement('div'))
 
   img.destroy();
@@ -33,7 +33,7 @@ test('Delete empty note', () => {
   const snapshot = newSnapshot(board);
   const noteContainer = document.createElement('div');
 
-  const note = board.newNote(1, 0, 0, '');
+  const note = board.newNote(1, 0, 0, 0, '');
   note.attach(noteContainer);
   snapshot.reset();
 
@@ -52,7 +52,7 @@ test('Delete note with image', () => {
   const snapshot = newSnapshot(board);
   const noteContainer = document.createElement('div');
 
-  const note = board.newNote(1, 0, 0, '', img);
+  const note = board.newNote(1, 0, 0, 0, '', img);
   note.attach(noteContainer);
   snapshot.reset();
 
@@ -71,7 +71,7 @@ test('Replacing NoteView.img then destroy old image should not effecting NoteVie
   const PATH2 = 'IMAGE2';
   const img1 = imageStorage.getOrAdd(PATH1, 1);
   const img2 = imageStorage.getOrAdd(PATH2, 2);
-  const note = board.newNote(1, 0, 0, '', img1);
+  const note = board.newNote(1, 0, 0, 0, '', img1);
 
   note.img = img2;
   img1.destroy();

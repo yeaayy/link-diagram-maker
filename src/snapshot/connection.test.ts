@@ -11,10 +11,14 @@ function newSnapshot(board: BoardView) {
   return snapshot;
 }
 
+function newDummyNote(board: BoardView) {
+  return board.newNote(board.notes.length, 0, 0, 0, '');
+}
+
 test('Connection create have correct side effect', () => {
   const board = new BoardView('');
-  const noteA = board.newNote(0, 0, 0, '');
-  const noteB = board.newNote(1, 0, 0, '');
+  const noteA = newDummyNote(board);
+  const noteB = newDummyNote(board);
   const conn = board.newConnection(noteA, ConnPosition.top, noteB, ConnPosition.left);
 
   expect(noteA.conn.has(noteB.id)).true
@@ -24,8 +28,8 @@ test('Connection create have correct side effect', () => {
 
 test('Connection destroy have correct side effect', () => {
   const board = new BoardView('');
-  const noteA = board.newNote(0, 0, 0, '');
-  const noteB = board.newNote(1, 0, 0, '');
+  const noteA = newDummyNote(board);
+  const noteB = newDummyNote(board);
   const conn = board.newConnection(noteA, ConnPosition.top, noteB, ConnPosition.left);
   conn.destroy();
 
@@ -36,8 +40,8 @@ test('Connection destroy have correct side effect', () => {
 
 test('Connection create ordered', () => {
   const board = new BoardView('');
-  const noteA = board.newNote(0, 0, 0, '');
-  const noteB = board.newNote(1, 0, 0, '');
+  const noteA = newDummyNote(board);
+  const noteB = newDummyNote(board);
 
   {
     const conn = board.newConnection(noteA, ConnPosition.top, noteB, ConnPosition.left);
@@ -60,8 +64,8 @@ test('Connection create ordered', () => {
 
 test('Connection empty > create', () => {
   const board = new BoardView('');
-  const noteA = board.newNote(0, 0, 0, '');
-  const noteB = board.newNote(1, 0, 0, '');
+  const noteA = newDummyNote(board);
+  const noteB = newDummyNote(board);
   const s = newSnapshot(board);
 
   // Test
@@ -77,8 +81,8 @@ test('Connection empty > create', () => {
 test('Connection empty > edit', () => {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   const board = new BoardView('');
-  const noteA = board.newNote(0, 0, 0, '');
-  const noteB = board.newNote(1, 0, 0, '');
+  const noteA = newDummyNote(board);
+  const noteB = newDummyNote(board);
   const s = newSnapshot(board);
   
   const conn = board.newConnection(noteA, ConnPosition.top, noteB, ConnPosition.top);
@@ -98,8 +102,8 @@ test('Connection empty > edit', () => {
 
 test('Connection empty > delete', () => {
   const board = new BoardView('');
-  const noteA = board.newNote(0, 0, 0, '');
-  const noteB = board.newNote(1, 0, 0, '');
+  const noteA = newDummyNote(board);
+  const noteB = newDummyNote(board);
   const s = newSnapshot(board);
   const conn = board.newConnection(noteA, ConnPosition.top, noteB, ConnPosition.top);
   s.reset();
@@ -116,8 +120,8 @@ test('Connection empty > delete', () => {
 
 test('Connection create > create', () => {
   const board = new BoardView('');
-  const noteA = board.newNote(0, 0, 0, '');
-  const noteB = board.newNote(1, 0, 0, '');
+  const noteA = newDummyNote(board);
+  const noteB = newDummyNote(board);
   const s = newSnapshot(board);
   const conn = board.newConnection(noteA, ConnPosition.top, noteB, ConnPosition.top);
   s.reset();
@@ -130,8 +134,8 @@ test('Connection create > create', () => {
 test('Connection create > edit', () => {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   const board = new BoardView('');
-  const noteA = board.newNote(0, 0, 0, '');
-  const noteB = board.newNote(1, 0, 0, '');
+  const noteA = newDummyNote(board);
+  const noteB = newDummyNote(board);
   const s = newSnapshot(board);
   s.reset();
 
@@ -152,8 +156,8 @@ test('Connection create > edit', () => {
 test('Connection create > delete', () => {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   const board = new BoardView('');
-  const noteA = board.newNote(0, 0, 0, '');
-  const noteB = board.newNote(1, 0, 0, '');
+  const noteA = newDummyNote(board);
+  const noteB = newDummyNote(board);
   const s = newSnapshot(board);
   s.reset();
 
@@ -170,8 +174,8 @@ test('Connection create > delete', () => {
 test('Connection edit > create', () => {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   const board = new BoardView('');
-  const noteA = board.newNote(0, 0, 0, '');
-  const noteB = board.newNote(1, 0, 0, '');
+  const noteA = newDummyNote(board);
+  const noteB = newDummyNote(board);
   const s = newSnapshot(board);
   const conn = board.newConnection(noteA, ConnPosition.top, noteB, ConnPosition.top);
   conn.attach(svg);
@@ -186,8 +190,8 @@ test('Connection edit > create', () => {
 test('Connection edit > edit', () => {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   const board = new BoardView('');
-  const noteA = board.newNote(0, 0, 0, '');
-  const noteB = board.newNote(1, 0, 0, '');
+  const noteA = newDummyNote(board);
+  const noteB = newDummyNote(board);
   const s = newSnapshot(board);
   const conn = board.newConnection(noteA, ConnPosition.top, noteB, ConnPosition.top, '000000', 5);
   conn.attach(svg);
@@ -209,8 +213,8 @@ test('Connection edit > edit', () => {
 test('Connection edit > delete', () => {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   const board = new BoardView('');
-  const noteA = board.newNote(0, 0, 0, '');
-  const noteB = board.newNote(1, 0, 0, '');
+  const noteA = newDummyNote(board);
+  const noteB = newDummyNote(board);
   const s = newSnapshot(board);
   const conn = board.newConnection(noteA, ConnPosition.top, noteB, ConnPosition.top, '000000', 5);
   conn.attach(svg);
@@ -229,8 +233,8 @@ test('Connection edit > delete', () => {
 
 test('Connection delete > create', () => {
   const board = new BoardView('');
-  const noteA = board.newNote(0, 0, 0, '');
-  const noteB = board.newNote(1, 0, 0, '');
+  const noteA = newDummyNote(board);
+  const noteB = newDummyNote(board);
   const s = newSnapshot(board);
   const conn1 = board.newConnection(noteA, ConnPosition.top, noteB, ConnPosition.top, '000000', 5);
   s.reset();
@@ -250,8 +254,8 @@ test('Connection delete > create', () => {
 
 test('Connection delete > delete', () => {
   const board = new BoardView('');
-  const noteA = board.newNote(0, 0, 0, '');
-  const noteB = board.newNote(1, 0, 0, '');
+  const noteA = newDummyNote(board);
+  const noteB = newDummyNote(board);
   const s = newSnapshot(board);
   const conn = board.newConnection(noteA, ConnPosition.top, noteB, ConnPosition.top, '000000', 5);
   s.reset();

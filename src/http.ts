@@ -30,6 +30,7 @@ export type BoardData = {
     id: string,
     x: string,
     y: string,
+    width: string,
     text: string,
     img: null | {path: string, id: string},
   }[],

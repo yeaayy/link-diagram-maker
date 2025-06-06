@@ -6,7 +6,7 @@ import { NoteView } from '@/model/NoteView';
 import type { StoredImage } from '@/model/StoredImage';
 import type ActionHistory from '@/snapshot/ActionHistory';
 import { faWarning } from '@fortawesome/free-solid-svg-icons';
-import { computed, inject, triggerRef } from 'vue';
+import { computed, inject, onBeforeUnmount, onMounted, triggerRef, watch } from 'vue';
 import ChangeableImage from './ChangeableImage.vue';
 import DeleteButton from './DeleteButton.vue';
 
@@ -19,6 +19,24 @@ const note = computed(() => prop.note);
 const confirm = useConfirm();
 const imageSelector = useImageSelector();
 const imageStorage = inject(imageStorageKey)!;
+
+watch(note, function(note, oldNote, onCleanup) {
+  oldNote.resized.remove(onResized);
+  note.resized.listen(onResized);
+});
+
+function onWidthChange(e: Event) {
+  prop.history.begin('change note width');
+  const target = e.target as HTMLInputElement;
+  const value = Math.max(parseFloat(target.value), 0);
+  if (!isNaN(value) && value !== 0) {
+    note.value.width = value;
+  }
+}
+
+function onResized() {
+  triggerRef(note);
+}
 
 function onTextChange(e: Event) {
   prop.history.begin('change note text');
@@ -44,17 +62,25 @@ function onDropImage(img: File) {
 
 function onDelete() {
   confirm({
-      icon: faWarning,
-      title: 'Confirm delete',
-      body: 'Delete selected note?',
-    }).then(result => {
-      if (result) {
-        prop.history.begin('delete note');
-        note.value.destroy();
-        prop.history.end();
-      }
-    });
+    icon: faWarning,
+    title: 'Confirm delete',
+    body: 'Delete selected note?',
+  }).then(result => {
+    if (result) {
+      prop.history.begin('delete note');
+      note.value.destroy();
+      prop.history.end();
+    }
+  });
 }
+
+onMounted(() => {
+  note.value.resized.listen(onResized);;
+});
+
+onBeforeUnmount(() => {
+  note.value.resized.remove(onResized);;
+});
 </script>
 
 <template>
@@ -62,6 +88,11 @@ function onDelete() {
     <DeleteButton @click="onDelete" />
 
     <ChangeableImage class="row" :img="note.img" @select="onSelectImage" @drop="onDropImage" />
+
+    <div class="row">
+      <label for="width">Width:</label><br>
+      <input id="width" type="text" :value="note.width" @input="onWidthChange">
+    </div>
 
     <div class="row">
       <label for="text">Text:</label>

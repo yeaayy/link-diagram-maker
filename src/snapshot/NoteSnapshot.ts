@@ -7,6 +7,7 @@ function create(note: NoteView): NoteSnapshotActionCreate {
     id: note.id,
     x: note.x,
     y: note.y,
+    width: note.width,
     text: note.text,
     img: note.img?.id | 0,
   };
@@ -24,6 +25,9 @@ function edit(note: NoteView, ...fields: (keyof NoteData)[]) {
         break;
       case "y":
         result.y = note.y;
+        break;
+      case "width":
+        result.width = note.width;
         break;
       case "text":
         result.text = note.text;

@@ -18,15 +18,18 @@ export class NoteView {
   private viewImage;
   private pointerHandler;
   private dotPointerHandlers: PointerHandler[];
+  private resizerPointerHandlers: PointerHandler[];
 
   private dragFrom = null! as number;
-  private drawPreview: null | SVGLineElement = null;
+  private resizers: HTMLElement[] = [];
 
   public readonly beforeDetached = new TypedEventListener<NoteView>();
   public readonly clicked = new TypedEventListener<NoteView>();
   public readonly startDrag = new TypedEventListener<NoteView>();
   public readonly dragging = new TypedEventListener<[NoteView, dx: number, dy: number]>();
   public readonly endDrag = new TypedEventListener<[NoteView]>();
+  public readonly resizing = new TypedEventListener<[NoteView]>();
+  public readonly resized = new TypedEventListener<[NoteView]>();
   public readonly dots: HTMLElement[] = [];
   public readonly conn = new Map<number, ConnectionView>;
 
@@ -35,6 +38,7 @@ export class NoteView {
     public readonly id: number,
     private _x: number,
     private _y: number,
+    private _width: number,
     private _text: string = '',
     private _img: StoredImage | null = null,
   ) {
@@ -47,7 +51,9 @@ export class NoteView {
         this.dots[1] = div('dot', setPos(ConnPosition.top)),
         this.dots[2] = div('dot', setPos(ConnPosition.right)),
         this.dots[3] = div('dot', setPos(ConnPosition.bottom)),
-      )
+      ),
+      this.resizers[0] = div('resize', 'left'),
+      this.resizers[1] = div('resize', 'right'),
     );
 
     this.viewImage.onload = () => {
@@ -73,7 +79,17 @@ export class NoteView {
         instance: this,
       }));
     }
+    this.resizerPointerHandlers = [this.resizeLeft, this.resizeRight].map(moveHandler => {
+      return new PointerHandler({
+        onstart: () => this.resizing.emit(this),
+        onmove: moveHandler,
+        onend: () => this.resized.emit(this),
+        stopPropagation: true,
+        instance: this,
+      });
+    });
 
+    this.width = _width;
     this.text = _text;
     this.img = _img;
     this.viewRoot.dataset['id'] = id.toString();
@@ -88,6 +104,8 @@ export class NoteView {
       for (let i = 0; i < 4; i++) {
         this.dotPointerHandlers[i].attach(this.dots[i], dst);
       }
+      this.resizerPointerHandlers[0].attach(this.resizers[0]);
+      this.resizerPointerHandlers[1].attach(this.resizers[1]);
     }
   }
 
@@ -97,8 +115,8 @@ export class NoteView {
     this.viewRoot.parentElement!.removeChild(this.viewRoot);
     if (this.board.editable) {
       this.pointerHandler.detach();
-      for (const dotPointerHandler of this.dotPointerHandlers) {
-        dotPointerHandler.detach();
+      for (const pointerHandler of [...this.dotPointerHandlers, ...this.resizerPointerHandlers]) {
+        pointerHandler.detach();
       }
     }
   }
@@ -129,6 +147,32 @@ export class NoteView {
     }
   }
 
+  private resizeRight(ev: GenericPointerEvent, e: PointerMoveEvent) {
+    const reverse = NoteSnapshot.edit(this, 'y', 'width');
+    const oldHeight = this.viewRoot.clientHeight;
+    this._width += e.dx / this.board.scale;
+    this.viewRoot.style.width = this._width + 'px';
+
+    this._y -= (this.viewRoot.clientHeight - oldHeight) / 2;
+    this.updatePosition();
+
+    this.board.noteSnapshotAction.emit(reverse, NoteSnapshot.edit(this, 'y', 'width'));
+  }
+
+  private resizeLeft(ev: GenericPointerEvent, e: PointerMoveEvent) {
+    const reverse = NoteSnapshot.edit(this, 'x', 'y', 'width');
+    const dx = e.dx / this.board.scale;
+    const oldHeight = this.viewRoot.clientHeight;
+    this._width -= dx;
+    this.viewRoot.style.width = this._width + 'px';
+
+    this._x += dx;
+    this._y -= (this.viewRoot.clientHeight - oldHeight) / 2;
+    this.updatePosition();
+
+    this.board.noteSnapshotAction.emit(reverse, NoteSnapshot.edit(this, 'x', 'y', 'width'));
+  }
+
   public move(dx: number, dy: number) {
     const reverse = NoteSnapshot.edit(this, 'x', 'y');
     this._x += dx;
@@ -146,8 +190,17 @@ export class NoteView {
     return this._y;
   }
 
-  public get text() {
-    return this._text;
+  public set width(width: number) {
+    const reverse = NoteSnapshot.edit(this, 'width');
+    this._width = width;
+    this.viewRoot.style.width = this._width + 'px';
+    this.updatePosition();
+    this.board.noteSnapshotAction.emit(reverse, NoteSnapshot.edit(this, 'width'));
+    this.resized.emit(this);
+  }
+
+  public get width() {
+    return this._width;
   }
 
   public set img(img: StoredImage | null) {
@@ -189,6 +242,10 @@ export class NoteView {
 
     if (this.isAttached())
       this.board.noteSnapshotAction.emit(reverse, NoteSnapshot.edit(this, 'text'));
+  }
+
+  public get text() {
+    return this._text;
   }
 
   private onImageDestroyed(img: StoredImage) {

@@ -35,20 +35,20 @@ export class BoardView {
   ) {
   }
 
-  public newNote(id: number, x: number, y: number, text: string, img: StoredImage | null = null) {
-    const result = new NoteView(this, id, x, y, text, img);
+  public newNote(id: number, x: number, y: number, width: number, text: string, img: StoredImage | null = null) {
+    const result = new NoteView(this, id, x, y, width, text, img);
     this.notes.push(result);
     this.noteMap.set(id, result);
     this.noteCreated.emit(result);
     return result;
   }
 
-  public createNote(x: number, y: number, text: string, img: StoredImage | null = null) {
+  public createNote(x: number, y: number, width: number, text: string, img: StoredImage | null = null) {
     let id;
     do {
       id = Math.floor(Math.random() * 0x7fffffff);
     } while (this.noteMap.has(id));
-    return this.newNote(id, x, y, text, img);
+    return this.newNote(id, x, y, width, text, img);
   }
 
   public newConnection(a: number | NoteView, pa: ConnPosition, b: number | NoteView, pb: ConnPosition, color?: string, size?: number, dash?: number[]) {
@@ -104,13 +104,16 @@ export class BoardView {
     for (const a of snapshot.notes.values()) {
       switch (a.type) {
         case SnapshotType.create:
-          this.newNote(a.id, a.x, a.y, a.text, imgStore.findById(a.img));
+          this.newNote(a.id, a.x, a.y, a.width, a.text, imgStore.findById(a.img));
           break;
         case SnapshotType.edit: {
           const note = this.noteMap.get(a.id);
           if (!note) return false;
-          if (a.x !== undefined && a.y !== undefined) {
-            note.move(a.x - note.x, a.y - note.y);
+          if (a.width !== undefined) {
+            note.width = a.width;
+          }
+          if (a.x !== undefined || a.y !== undefined) {
+            note.move(a.x === undefined ? 0 : (a.x - note.x), a.y === undefined ? 0 : (a.y - note.y));
           }
           if (a.text !== undefined) {
             note.text = a.text;

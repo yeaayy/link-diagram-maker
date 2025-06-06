@@ -1,6 +1,7 @@
 
 .note {
   --padding: 0.5rem;
+  --resizer-width: calc(0.5rem / var(--scale));
   position: absolute;
   left: calc(var(--shift-x) + var(--x));
   top: calc(var(--shift-y) + var(--y));
@@ -64,6 +65,22 @@
         bottom: var(--delta1);
         left: var(--delta2);
       }
+    }
+  }
+
+  > .resize {
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    width: var(--resizer-width);
+    cursor: ew-resize;
+
+    &.left {
+      left: calc((var(--resizer-width)) / -2);
+    }
+
+    &.right {
+      right: calc((var(--resizer-width)) / -2);
     }
   }
 }

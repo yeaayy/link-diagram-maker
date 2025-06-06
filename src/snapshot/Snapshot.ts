@@ -48,6 +48,7 @@ export function mergeSnapshotAction<I extends Object, D extends Object>(a: Snaps
           for (const prop in b) {
             const key = prop as keyof SnapshotActionEdit<I, D>;
             if (b[key] !== undefined) {
+              // @ts-ignore
               result[key] = b[key];
             }
           }
@@ -71,6 +72,7 @@ export type NoteID = {id: number};
 export type NoteData = {
   x: number;
   y: number;
+  width: number;
   text: string;
   img: number;
 };

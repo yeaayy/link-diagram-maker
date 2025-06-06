@@ -45,6 +45,7 @@ function proccessData(board: BoardView, data: BoardData) {
         parseInt(note.id),
         parseFloat(note.x),
         parseFloat(note.y),
+        parseFloat(note.width),
         note.text,
         note.img ? imageStorage.getOrAdd(note.img.path, parseInt(note.img.id)) : null,
       );

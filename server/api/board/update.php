@@ -36,8 +36,8 @@ if (vis_hex()($json['id'])['error']) {
 $board_uuid = $json['id'];
 $db = use_db();
 $create_note = $db->prepare(
-  'INSERT INTO `notes`(`board_id`, `note_id`, `x`, `y`, `image_id`, `text`)
-  VALUES (:board_id, :note_id, :x, :y, :image_id, :text)'
+  'INSERT INTO `notes`(`board_id`, `note_id`, `x`, `y`, `width`, `image_id`, `text`)
+  VALUES (:board_id, :note_id, :x, :y, :width, :image_id, :text)'
 );
 
 $delete_note = $db->prepare(
@@ -60,11 +60,17 @@ function edit_note($data) {
     'note_id' => $data['id'],
   ];
   $to_set = [];
-  if ($data['x'] !== null && $data['y'] !== null) {
+  if ($data['x'] !== null) {
     array_push($to_set, 'x = :x');
-    array_push($to_set, 'y = :y');
     $input['x'] = $data['x'];
+  }
+  if ($data['y'] !== null) {
+    array_push($to_set, 'y = :y');
     $input['y'] = $data['y'];
+  }
+  if ($data['width'] !== null) {
+    array_push($to_set, 'width = :width');
+    $input['width'] = $data['width'];
   }
   if ($data['text'] !== null) {
     array_push($to_set, 'text = :text');
@@ -130,6 +136,7 @@ try {
       'id' => [required(), vis_number()],
       'x' => [optional(), vis_number()],
       'y' => [optional(), vis_number()],
+      'width' => [optional(), vis_number()],
       'text' => [optional(), vis_string()],
       'img' => [optional(), vis_number()],
     ]);
@@ -140,6 +147,7 @@ try {
           'note_id' => $note['id'],
           'x' => $note['x'],
           'y' => $note['y'],
+          'width' => $note['width'],
           'text' => $note['text'],
           'image_id' => $note['img'] == 0 ? null : $note['img'],
         ]);

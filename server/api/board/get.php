@@ -37,7 +37,7 @@ $name = $row['name'];
 $board_owner = $row['owner'];
 $board_id = $row['id'];
 
-$s = $db->prepare('SELECT n.note_id, n.x, n.y, n.text, n.image_id, i.path, i.ext FROM `notes` AS n LEFT JOIN `images` AS i ON n.image_id = i.id WHERE n.board_id = :board_id');
+$s = $db->prepare('SELECT n.note_id, n.x, n.y, n.width, n.text, n.image_id, i.path, i.ext FROM `notes` AS n LEFT JOIN `images` AS i ON n.image_id = i.id WHERE n.board_id = :board_id');
 $s->execute([
   'board_id' => $board_id,
 ]);
@@ -54,6 +54,7 @@ while ($row = $s->fetch()) {
     'id' => $row['note_id'],
     'x' => $row['x'],
     'y' => $row['y'],
+    'width' => $row['width'],
     'text' => $row['text'],
     'img' => $img,
   ]);
