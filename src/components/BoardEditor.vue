@@ -219,8 +219,8 @@ function onWindowResize() {
     board.dx = width / 2;
     board.dy = height / 2;
   } else {
-    board.dx += (width - board.width) * board.scale / 2;
-    board.dy += (height - board.height) * board.scale / 2;
+    board.dx += (width - board.width) / board.scale / 2;
+    board.dy += (height - board.height) / board.scale / 2;
   }
   board.width = width;
   board.height = height;
