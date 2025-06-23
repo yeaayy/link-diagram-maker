@@ -89,10 +89,10 @@ export class NoteView {
       });
     });
 
-    this.width = _width;
     this.text = _text;
     this.img = _img;
     this.viewRoot.dataset['id'] = id.toString();
+    this.viewRoot.style.width = this._width + 'px';
 
     board.noteSnapshotAction.emit(NoteSnapshot.delete(this), NoteSnapshot.create(this));
   }
