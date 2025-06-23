@@ -7,6 +7,9 @@ export class ShortcutDesc<T extends string> {
 }
 
 export const AllShortcut = [
+  new ShortcutDesc('note-selection-tool', 'Activate note selection tool'),
+  new ShortcutDesc('conn-selection-tool', 'Activate connection selection tool'),
+  new ShortcutDesc('hand-tool', 'Activate hand tool'),
   new ShortcutDesc('delete', 'Delete'),
   new ShortcutDesc('force-delete', 'Force delete'),
   new ShortcutDesc('new-note', 'New note'),

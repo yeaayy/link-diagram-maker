@@ -6,7 +6,6 @@ import ImageSelector from '@/components/ImageSelector.vue';
 import NoteEditor from '@/components/NoteEditor.vue';
 import Toolbar from '@/components/Toolbar.vue';
 import { useConfirm } from '@/confirm';
-import Rect from '@/math/Rect';
 import RectMinMax from '@/math/RectMinMax';
 import { BoardView } from '@/model/BoardView';
 import { ConnectionView } from '@/model/ConnectionView';
@@ -14,6 +13,10 @@ import { NoteView } from '@/model/NoteView';
 import type { StoredImage } from '@/model/StoredImage';
 import ActionHistory from '@/snapshot/ActionHistory';
 import { Snapshot, type ConnectionSnapshotAction, type NoteSnapshotAction } from '@/snapshot/Snapshot';
+import ConnectionSelectionTool from '@/tools/ConnectionSelectionTool';
+import HandTool from '@/tools/HandTool';
+import NoteSelectionTool from '@/tools/NoteSelectionTool';
+import type Tool from '@/tools/Tool';
 import { DropArea } from '@/utils/DropArea';
 import PointerHandler, { type GenericPointerEvent, type PointerMoveEvent } from '@/utils/PointerHandler';
 import TriggerOnce from '@/utils/TriggerOnce';
@@ -24,22 +27,22 @@ import { inject, onBeforeUnmount, onMounted, provide, ref, shallowReactive, shal
 
 let px = 0, py = 0;
 let draggedNote: null | NoteView = null;
-const SENSITIVITY = 5;
-const confirm = useConfirm();
-const root = shallowRef(null! as HTMLDivElement);
-const noteContainer = shallowRef(null! as HTMLDivElement);
-const svg = shallowRef(null! as SVGElement);
-const previewConnection = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-const selectedConnection: Ref<ConnectionView[]> = ref([]);
-const selectedNote = shallowRef([] as NoteView[]);
-const noteEditor = shallowRef(null! as ComponentInstance<typeof NoteEditor>);
-const imageSelector = shallowRef(null! as ComponentInstance<typeof ImageSelector>);
-const fixSelection = new TriggerOnce(onFixSelection);
-const imageStorage = inject(imageStorageKey)!;
-const undoLimit = inject<Ref<number>>('undo-limit')!;
-const dropArea = new DropArea('image/');
+let activeTool: Tool = null!;
 
-let pointerInverval: NodeJS.Timeout | null = null;
+const SENSITIVITY           = 5;
+const confirm               = useConfirm();
+const root                  = shallowRef<HTMLDivElement>(null!);
+const noteContainer         = shallowRef<HTMLDivElement>(null!);
+const svg                   = shallowRef<SVGElement>(null!);
+const selectedConnection    = shallowRef<ConnectionView[]>([]);
+const selectedNote          = shallowRef<NoteView[]>([]);
+const imageSelector         = shallowRef<ComponentInstance<typeof ImageSelector>>(null!);
+const previewConnection     = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+const dropArea              = new DropArea('image/');
+const fixSelection          = new TriggerOnce(onFixSelection);
+const imageStorage          = inject(imageStorageKey)!;
+const undoLimit             = inject<Ref<number>>('undo-limit')!;
+
 const selectArea = ref<null | RectMinMax>(null);
 const poinerHandler = new PointerHandler({
   onstart: onPointerStart,
@@ -69,6 +72,13 @@ const history = new ActionHistory(undoLimit.value, {
   },
 }, () => new Snapshot(board.id));
 
+const tools = {
+  'select-note': new NoteSelectionTool(board, selectArea, selectedNote, unselectNote, unselectConnection),
+  'select-conn': new ConnectionSelectionTool(board, selectArea, selectedConnection, unselectNote, unselectConnection),
+  'hand': new HandTool(board),
+};
+setActiveTool('hand');
+
 watch(undoLimit, undoLimit => {
   history.limit = undoLimit;
 });
@@ -78,19 +88,16 @@ if (import.meta.env.DEV) {
   (window as any).actionHistory = history;
 }
 
+function setActiveTool(name: keyof typeof tools) {
+  activeTool = tools[name];
+}
+
 function onNoteSnapshotAction(backward: NoteSnapshotAction, forward: NoteSnapshotAction) {
   history.addNoteSnapshotAction(backward, forward);
 }
 
 function onconnectionSnapshotAction(backward: ConnectionSnapshotAction, forward: ConnectionSnapshotAction) {
   history.addConnectionSnapshotAction(backward, forward);
-}
-
-function transformScreenToCanvas(screenX: number, screenY: number) {
-  return [
-    screenX / board.scale - board.dx,
-    screenY / board.scale - board.dy,
-  ] as [number, number];
 }
 
 function isEditable() {
@@ -105,85 +112,23 @@ function onFileDropped(file: File, e: DragEvent)  {
 }
 
 function onPointerStart(ev: GenericPointerEvent, px: number, py: number) {
-  if (ev instanceof MouseEvent && (ev.buttons & PointerHandler.MOUSE_LEFT_BUTTON) == 0 || !board.editable) {
-    return;
-  }
-  pointerInverval = setInterval(onPointerIdleInterval, 1);
+  activeTool.onPointerStart(ev, px, py);
 }
 
 function onPointerIdle(ev: GenericPointerEvent, x: number, y: number) {
   const target = ev.target as HTMLElement;
-  if (target.classList.contains('content') || selectArea.value) {
+  if (target.classList.contains('content')) {
     px = x;
     py = y;
   }
 }
 
-function onPointerIdleInterval() {
-  if (selectArea.value == null) return;
-
-  const SCROLL_AREA = Math.min(board.width, board.height) * 0.1;
-  const SENSITIVITY = 2;
-  if (px < SCROLL_AREA) {
-    board.dx += (1 - px / SCROLL_AREA) * SENSITIVITY;
-  }
-  if (px > board.width - SCROLL_AREA) {
-    board.dx += (board.width - SCROLL_AREA - px) / SCROLL_AREA * SENSITIVITY;
-  }
-  if (py < SCROLL_AREA) {
-    board.dy += (1 - py / SCROLL_AREA) * SENSITIVITY;
-  }
-  if (py > board.height - SCROLL_AREA) {
-    board.dy += (board.height - SCROLL_AREA - py) / SCROLL_AREA * SENSITIVITY;
-  }
-  const [cnvX, cnvY] = transformScreenToCanvas(px, py);
-  selectArea.value!.x2 = cnvX;
-  selectArea.value!.y2 = cnvY;
-}
-
 function onPointerMove(ev: GenericPointerEvent, e: PointerMoveEvent) {
-  if (ev instanceof MouseEvent) {
-    if (ev.buttons & PointerHandler.MOUSE_MIDDLE_BUTTON) {
-      board.dx += e.dx / board.scale;
-      board.dy += e.dy / board.scale;
-    }
-    if (!selectArea.value && (ev.buttons & PointerHandler.MOUSE_LEFT_BUTTON) && board.editable) {
-      selectArea.value = new RectMinMax(...transformScreenToCanvas(px, py));
-    }
-  } else {
-    board.dx += e.dx / board.scale;
-    board.dy += e.dy / board.scale;
-  }
+  activeTool.onPointerMove(ev, e);
 }
 
-function onPointerEnd(ev: GenericPointerEvent) {
-  if (selectArea.value && ev instanceof MouseEvent && !(ev.buttons & PointerHandler.MOUSE_LEFT_BUTTON)) {
-    if (pointerInverval) {
-      clearInterval(pointerInverval);
-    }
-    if (!keyboard.shiftPressed) {
-      unselectNote(false);
-    }
-    for (const note of board.notes) {
-      if (!Rect.isRectInsideRectRR(note, selectArea.value)) continue;
-
-      if (keyboard.shiftPressed) {
-        const index = selectedNote.value.indexOf(note);
-        if (index === -1) {
-          selectedNote.value.push(note);
-          note.highlight();
-        } else {
-          selectedNote.value.splice(index, 1);
-          note.highlight(false);
-        }
-      } else {
-        selectedNote.value.push(note);
-        note.highlight();
-      }
-    }
-    selectArea.value = null;
-    triggerRef(selectedNote);
-  }
+function onPointerEnd(ev: GenericPointerEvent, px: number, py: number) {
+  activeTool.onPointerEnd(ev, px, py);
 }
 
 function onPointerClick(ev: GenericPointerEvent) {
@@ -283,6 +228,7 @@ function selectAllConnection() {
     conn.highlight();
   }
   selectedConnection.value.push(...board.connections);
+  triggerRef(selectedConnection);
 }
 
 function selectMatchingConnection(matchColor: boolean, matchSize: boolean, matchDash: boolean) {
@@ -302,6 +248,7 @@ function selectMatchingConnection(matchColor: boolean, matchSize: boolean, match
       selectedConnection.value.push(conn);
     }
   }
+  triggerRef(selectedConnection);
 }
 
 function selectLikeConnection() {
@@ -320,7 +267,7 @@ function selectLikeConnectionDash() {
   selectMatchingConnection(false, false, true);
 }
 
-function unselectConnection() {
+function unselectConnection(update = true) {
   const length = selectedConnection.value.length;
   if (length === 0) return;
 
@@ -328,6 +275,9 @@ function unselectConnection() {
     conn.highlight(false);
   }
   selectedConnection.value.splice(0, length);
+  if (update) {
+    triggerRef(selectedConnection);
+  }
 }
 
 function unselectNote(update = true) {
@@ -344,7 +294,7 @@ function unselectNote(update = true) {
 }
 
 function unselect(update = true) {
-  unselectConnection();
+  unselectConnection(update);
   unselectNote(update);
 }
 
@@ -361,11 +311,16 @@ function onFixSelection() {
     triggerRef(selectedNote);
   }
 
+  changed = false;
   for (let i = 0; i < selectedConnection.value.length; i++) {
     if (!selectedConnection.value[i].isAttached()) {
       selectedConnection.value.splice(i, 1);
+      changed = true;
       i--;
     }
+  }
+  if (changed) {
+    triggerRef(selectedConnection);
   }
 }
 
@@ -549,7 +504,7 @@ function removeConnectionListener(conn: ConnectionView) {
 function onConnectionClicked(conn: ConnectionView) {
   unselectNote();
   if (!keyboard.shiftPressed) {
-    unselectConnection();
+    unselectConnection(false);
   }
   const index = selectedConnection.value.indexOf(conn);
   if (index === -1) {
@@ -560,6 +515,7 @@ function onConnectionClicked(conn: ConnectionView) {
     conn.highlight(false);
   }
   history.end();
+  triggerRef(selectedConnection);
 }
 
 function disableEditing() {
@@ -676,6 +632,7 @@ onBeforeUnmount(() => {
     @home="resetView"
     @new-note="createNewNoteAtCenter"
     @new-image-note="createNewImageNoteAtCenter"
+    @tool-changed="setActiveTool($event)"
     v-model:board-name="board.name" />
 
   <div ref="root" :class="{
@@ -708,8 +665,8 @@ onBeforeUnmount(() => {
     </div>
   </div>
 
-  <ConnectionEditor v-if="selectedConnection.length > 0" :connection="selectedConnection" :delete="onPressDelete" :history="history" />
-  <NoteEditor ref="noteEditor" v-if="selectedNote.length === 1" :note="selectedNote[0]" :history="history" />
+  <ConnectionEditor v-if="selectedConnection.length > 0" :connection="[...selectedConnection]" :delete="onPressDelete" :history="history" />
+  <NoteEditor v-if="selectedNote.length === 1" :note="selectedNote[0]" :history="history" />
   <ImageSelector ref="imageSelector" />
 </template>
 

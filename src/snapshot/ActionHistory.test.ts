@@ -33,7 +33,7 @@ test('action, undo, redo', () => {
   const history = newActionHistory(board);
 
   history.begin('new note');
-  const note = board.newNote(123, 0, 0, '');
+  const note = board.newNote(123, 0, 0, 0, '');
   note.attach(container);
   history.end();
 
@@ -57,7 +57,7 @@ test('2 action, undo, redo', () => {
   const history = newActionHistory(board);
 
   history.begin('new note');
-  const note = board.newNote(123, 0, 0, '');
+  const note = board.newNote(123, 0, 0, 0, '');
   note.attach(container);
 
   history.begin('move note');
@@ -87,7 +87,7 @@ test('2 action, undo, action, undo, redo', () => {
 
   // 1st action
   history.begin('new note');
-  const note = board.newNote(123, 0, 0, '');
+  const note = board.newNote(123, 0, 0, 0, '');
   note.attach(container);
 
   // 2nd action

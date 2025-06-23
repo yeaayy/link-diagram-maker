@@ -190,4 +190,13 @@ export class ConnectionView {
       dash,
     };
   }
+
+  get rect() {
+    return {
+      l: Math.min(this.view.x1.baseVal.value, this.view.x2.baseVal.value),
+      t: Math.min(this.view.y1.baseVal.value, this.view.y2.baseVal.value),
+      r: Math.max(this.view.x1.baseVal.value, this.view.x2.baseVal.value),
+      b: Math.max(this.view.y1.baseVal.value, this.view.y2.baseVal.value),
+    }
+  }
 }

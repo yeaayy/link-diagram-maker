@@ -96,8 +96,15 @@ export class ShortcutManager {
     return this.allShortcut;
   }
 
+  public getShortcut(name: ShortcutID) {
+    return this.allShortcut[name];
+  }
+
   private getDefaultShortcut() {
     return <{[Key in ShortcutID]: string[]}> {
+      'note-selection-tool': ['s'],
+      'conn-selection-tool': ['c'],
+      'hand-tool': ['space', 'h'],
       'delete': ['delete'],
       'force-delete': ['shift+delete'],
       'new-note': ['alt+n', 'ctrl+shift+n'],
