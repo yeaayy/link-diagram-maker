@@ -93,6 +93,10 @@
   opacity: 0;
 }
 
+.content.readonly .note .resize {
+  cursor: initial;
+}
+
 .preview-connection {
   display: none;
   pointer-events: none;

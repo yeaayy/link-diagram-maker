@@ -15,7 +15,7 @@ $db = use_db();
 $s = $db->prepare(
   'SELECT b.id, owner, name, public_access, write_access
   FROM `boards` AS b
-  LEFT JOIN `access` AS a ON a.board_id = b.id
+  LEFT JOIN `access` AS a ON a.board_id = b.id AND a.user_id = :user
   WHERE
     b.uid = :uid AND
     (b.public_access != \'no\' OR owner = :user OR a.user_id = :user)
